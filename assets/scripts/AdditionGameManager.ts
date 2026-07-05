@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, Label, Node, v3, tween, UITransform, input, Input, director } from 'cc';
+import { _decorator, Color, Component, Label, Node, v3, tween, input, Input, director } from 'cc';
 import { AudioManager } from './AudioManager';
 import { ScoreManager } from './ScoreManager';
 import { TimerManager } from './TimerManager';
@@ -17,8 +17,13 @@ enum GameState {
     GAME_OVER
 }
 
-@ccclass('GameManager')
-export class GameManager extends Component {
+/**
+ * 数字加法:左右两组水果,选出总和(10 以内,答案 2~9)。
+ * 复用 AudioManager/ScoreManager/TimerManager/ResultPanel/ButtonPanel/FruitSpawner。
+ * 结构照搬 GameManager 状态机,差异主要在 nextQuestion():出两组水果、答案为两数之和。
+ */
+@ccclass('AdditionGameManager')
+export class AdditionGameManager extends Component {
     @property(AudioManager)
     private audioManager: AudioManager | null = null;
 
@@ -29,7 +34,10 @@ export class GameManager extends Component {
     private timerManager: TimerManager | null = null;
 
     @property(FruitSpawner)
-    private fruitSpawner: FruitSpawner | null = null;
+    private leftSpawner: FruitSpawner | null = null;
+
+    @property(FruitSpawner)
+    private rightSpawner: FruitSpawner | null = null;
 
     @property(ButtonPanel)
     private buttonPanel: ButtonPanel | null = null;
@@ -47,12 +55,11 @@ export class GameManager extends Component {
     private totalTime: number = 30;
 
     @property
-    private baseQuestionTime: number = 5;
+    private baseQuestionTime: number = 6;
 
     private _state: GameState = GameState.IDLE;
     private _currentAnswer: number = 0;
     private _questionStartTime: number = 0;
-    private _elapsedTime: number = 0;
 
     onLoad() {
         this.buttonPanel?.setAnswerCallback(this.onPlayerAnswer.bind(this));
@@ -70,7 +77,6 @@ export class GameManager extends Component {
         if (this.feedbackLabel) this.feedbackLabel.node.active = false;
         if (this.countdownLabel) this.countdownLabel.node.active = false;
 
-        // 监听全局点击,在 idle 状态下开始游戏
         input.on(Input.EventType.TOUCH_START, this.onTouchStart, this);
     }
 
@@ -93,13 +99,12 @@ export class GameManager extends Component {
 
     public startGame() {
         this._state = GameState.COUNTDOWN;
-        this._elapsedTime = 0;
         this.scoreManager?.reset();
         this.resultPanel?.hide();
-        this.fruitSpawner?.clearFruits();
+        this.leftSpawner?.clearFruits();
+        this.rightSpawner?.clearFruits();
         this.buttonPanel?.setEnabled(false);
 
-        // 3-2-1 倒计时
         this.showCountdown(3);
     }
 
@@ -109,7 +114,6 @@ export class GameManager extends Component {
         this.countdownLabel.string = num > 0 ? `${num}` : '开始!';
         this.countdownLabel.node.setScale(v3(0, 0, 0));
 
-        // 倒计时音效:3-2-1 用 beep,"开始!" 用 beepFinal
         this.audioManager?.play(num > 0 ? 'beep' : 'beepFinal');
 
         tween(this.countdownLabel.node)
@@ -120,7 +124,7 @@ export class GameManager extends Component {
                 if (num > 0) {
                     this.showCountdown(num - 1);
                 } else {
-                    this.countdownLabel.node.active = false;
+                    this.countdownLabel!.node.active = false;
                     this.startPlaying();
                 }
             })
@@ -141,36 +145,38 @@ export class GameManager extends Component {
 
     private nextQuestion() {
         this._state = GameState.SHOWING_RESULT;
-        this.fruitSpawner?.clearFruits();
+        this.leftSpawner?.clearFruits();
+        this.rightSpawner?.clearFruits();
 
-        // 难度递进:按游戏实际流逝时间(墙钟)分三档
+        // 难度递进:按流逝时间分三档,控制每个加数上限与每题限时
         const remain = this.timerManager?.remainTime ?? this.totalTime;
         const elapsed = this.totalTime - remain;
         const progress = elapsed / this.totalTime; // 0~1
 
-        let minFruits = 1;
-        let maxFruits = 3;
+        let maxAddend = 3;
         let questionTime = this.baseQuestionTime;
-
-        // 注意:答案按钮只有 1~5,count 不能超过 5
         if (progress >= 0.66) {
-            minFruits = 3;
-            maxFruits = 5;
-            questionTime = 3;
-        } else if (progress >= 0.33) {
-            minFruits = 2;
-            maxFruits = 5;
+            maxAddend = 5;
             questionTime = 4;
+        } else if (progress >= 0.33) {
+            maxAddend = 4;
+            questionTime = 5;
         }
 
-        // count 在 [minFruits, maxFruits] 之间
-        const count = minFruits + Math.floor(Math.random() * (maxFruits - minFruits + 1));
-        this._currentAnswer = count;
+        // 两个加数各 1~maxAddend;确保和 <= 9(答案按钮 1~9)
+        let a = 0, b = 0;
+        do {
+            a = 1 + Math.floor(Math.random() * maxAddend);
+            b = 1 + Math.floor(Math.random() * maxAddend);
+        } while (a + b > 9);
+
+        this._currentAnswer = a + b;
 
         this.timerManager?.resetQuestionTimer(questionTime);
 
-        // 生成水果
-        this.fruitSpawner?.spawn(count);
+        // 左右各出一组同种水果
+        this.leftSpawner?.spawn(a, true);
+        this.rightSpawner?.spawn(b, true);
         this.audioManager?.play('appear');
 
         this._questionStartTime = Date.now();
@@ -204,10 +210,8 @@ export class GameManager extends Component {
             this.timerManager?.penalize(1);
         }
 
-        // 延迟后下一题
         this.scheduleOnce(() => {
             if (this._state === GameState.FEEDBACK) {
-                this._elapsedTime += (Date.now() - this._questionStartTime) / 1000;
                 this.nextQuestion();
             }
         }, correct ? 0.6 : 1.0);
@@ -216,31 +220,28 @@ export class GameManager extends Component {
     private onQuestionTimeout() {
         if (this._state !== GameState.WAITING_ANSWER) return;
         this._state = GameState.FEEDBACK;
-        this.scoreManager?.submitAnswer(false, this.timerManager?.perQuestionTime ?? 5);
+        this.scoreManager?.submitAnswer(false, this.timerManager?.perQuestionTime ?? 6);
         this.showFeedback(`时间到! 是 ${this._currentAnswer}`, false);
         this.audioManager?.play('wrong');
 
         this.scheduleOnce(() => {
             if (this._state === GameState.FEEDBACK) {
-                this._elapsedTime += this.timerManager?.perQuestionTime ?? 5;
                 this.nextQuestion();
             }
         }, 1.0);
     }
 
     private onGameTimeout() {
-        console.log('[GameManager] onGameTimeout fired');
         this._state = GameState.GAME_OVER;
         this.timerManager?.stopTimer();
         this.buttonPanel?.setEnabled(false);
-        this.fruitSpawner?.clearFruits();
+        this.leftSpawner?.clearFruits();
+        this.rightSpawner?.clearFruits();
 
-        // 隐藏游戏中的临时 label,避免和结算面板重叠
         if (this.feedbackLabel) this.feedbackLabel.node.active = false;
         if (this.countdownLabel) this.countdownLabel.node.active = false;
 
         const sm = this.scoreManager;
-        console.log('[GameManager] scoreManager=', !!sm, 'resultPanel=', !!this.resultPanel);
         if (sm && this.resultPanel) {
             this.resultPanel.show(
                 sm.score,
@@ -250,9 +251,6 @@ export class GameManager extends Component {
                 sm.fastestReaction,
                 sm.getStarCount()
             );
-            console.log('[GameManager] resultPanel.show called, score=', sm.score);
-        } else {
-            console.error('[GameManager] cannot show result: scoreManager or resultPanel is null');
         }
     }
 
@@ -275,7 +273,6 @@ export class GameManager extends Component {
 
     private goHome() {
         this.resultPanel?.hide();
-        // 合集里"返回主页"回到游戏选择菜单
         director.loadScene('Start');
     }
 

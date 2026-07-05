@@ -22,9 +22,9 @@ export class ButtonPanel extends Component {
             const btn = this.buttons[i];
             const num = i + 1;
 
-            // 设置颜色
+            // 设置颜色(取模,支持任意数量按钮,如加法用 1~9)
             const sprite = btn.getComponent(Sprite);
-            if (sprite) sprite.color = BUTTON_COLORS[i];
+            if (sprite) sprite.color = BUTTON_COLORS[i % BUTTON_COLORS.length];
 
             // 设置数字
             const label = btn.getComponentInChildren(Label);

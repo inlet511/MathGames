@@ -47,9 +47,15 @@ export class FruitSpawner extends Component {
         this._currentFruits = [];
     }
 
-    public spawn(count: number) {
+    public spawn(count: number, sameType: boolean = false) {
         this.clearFruits();
         if (!this._loaded || !this.spawnArea) return;
+
+        // sameType=true 时整组用同一种水果(如加法"3个苹果 + 2个香蕉")
+        const names = Array.from(this._spriteFrames.keys());
+        const fixedName = sameType && names.length > 0
+            ? names[Math.floor(Math.random() * names.length)]
+            : null;
 
         // 每个水果的随机缩放,先确定好用于计算间距
         const scales: number[] = [];
@@ -61,7 +67,7 @@ export class FruitSpawner extends Component {
         const positions = this.generatePositions(count, areaTransform.width, areaTransform.height, scales);
 
         for (let i = 0; i < count; i++) {
-            const fruitNode = this.createFruitNode();
+            const fruitNode = this.createFruitNode(fixedName);
             this.spawnArea.addChild(fruitNode);
             this._currentFruits.push(fruitNode);
 
@@ -83,14 +89,14 @@ export class FruitSpawner extends Component {
         }
     }
 
-    private createFruitNode(): Node {
+    private createFruitNode(fixedName: string | null = null): Node {
         const node = new Node('Fruit');
         node.layer = Layers.Enum.UI_2D;
         const sprite = node.addComponent(Sprite);
 
-        // 随机选一个水果
+        // 指定则用固定水果,否则随机选一个
         const names = Array.from(this._spriteFrames.keys());
-        const name = names[Math.floor(Math.random() * names.length)];
+        const name = fixedName ?? names[Math.floor(Math.random() * names.length)];
         sprite.spriteFrame = this._spriteFrames.get(name)!;
 
         // 必须用 CUSTOM,否则默认 TRIMMED 会用贴图原始尺寸覆盖 contentSize,导致水果远大于间距计算值而重叠
