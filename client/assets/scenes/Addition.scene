@@ -7592,6 +7592,9 @@
       },
       {
         "__id__": 223
+      },
+      {
+        "__id__": 224
       }
     ],
     "_prefab": null,
@@ -7684,8 +7687,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 560,
-      "height": 760
+      "width": 720,
+      "height": 1080
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -7709,10 +7712,10 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 30,
-      "g": 30,
-      "b": 50,
-      "a": 245
+      "r": 20,
+      "g": 18,
+      "b": 30,
+      "a": 235
     },
     "_spriteFrame": {
       "__uuid__": "f95a03f6-9424-4cca-b9cc-9bb1b08de03e@f9941",
@@ -8272,9 +8275,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 150,
-      "g": 150,
-      "b": 150,
+      "r": 120,
+      "g": 120,
+      "b": 120,
       "a": 255
     },
     "_string": "点此输入名字(可不填)",
@@ -8404,9 +8407,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 44,
-      "g": 62,
-      "b": 80,
+      "r": 30,
+      "g": 30,
+      "b": 40,
       "a": 255
     },
     "_string": "",
@@ -9155,8 +9158,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 560,
-      "height": 760
+      "width": 720,
+      "height": 1080
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -9194,5 +9197,17 @@
       "__id__": 215
     },
     "_id": "lb-Addition-lpc-44"
+  },
+  {
+    "__type__": "cc.BlockInputEvents",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 185
+    },
+    "_enabled": true,
+    "__prefab": null,
+    "_id": "lbblock-Addition"
   }
 ]
