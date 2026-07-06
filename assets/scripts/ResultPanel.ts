@@ -1,6 +1,48 @@
 import { _decorator, Component, Label, Node, v3, tween } from 'cc';
 const { ccclass, property } = _decorator;
 
+// 按星数(0~4)分档的鼓励评语库,每档多句随机挑一句;内容积极、有趣、无脏话
+const COMMENTS: string[][] = [
+    // 0 星:兜底(理论上最少 1 星,保留以防万一)
+    [
+        '别灰心,再试一次吧!',
+        '慢慢来,你可以的!',
+        '数字有点调皮,再抓抓看!',
+    ],
+    // 1 星:需要继续努力
+    [
+        '不错的开始,继续加油!',
+        '再练一练,下次会更棒!',
+        '每一次都在进步哦!',
+        '小小英雄,继续闯关吧!',
+        '慢慢来,你已经在路上啦!',
+    ],
+    // 2 星:还可以
+    [
+        '做得不错,再冲一冲!',
+        '有两下子嘛,继续保持!',
+        '越来越熟练啦,棒棒的!',
+        '离满星只差一点点咯!',
+        '手速在线,脑子也在线!',
+    ],
+    // 3 星:很厉害
+    [
+        '太厉害了,真是数学小能手!',
+        '哇,这波操作很惊艳!',
+        '又快又准,给你点赞!',
+        '闪闪发光的表现!',
+        '再进一步就满星啦,冲!',
+    ],
+    // 4 星:满星,超级棒
+    [
+        '完美!你就是数学小超人!',
+        '满星达成,无敌了!',
+        '全对又神速,太强啦!',
+        '教科书级别的发挥!',
+        '星星都被你收集光啦,厉害!',
+    ],
+];
+
 @ccclass('ResultPanel')
 export class ResultPanel extends Component {
     @property(Label)
@@ -17,6 +59,10 @@ export class ResultPanel extends Component {
 
     @property(Label)
     private starsLabel: Label | null = null;
+
+    // 根据星数显示的鼓励评语
+    @property(Label)
+    private commentLabel: Label | null = null;
 
     @property(Node)
     private replayBtn: Node | null = null;
@@ -51,14 +97,26 @@ export class ResultPanel extends Component {
         panel.active = true;
         panel.setScale(v3(0, 0, 0));
 
-        if (this.finalScoreLabel) this.finalScoreLabel.string = `${score}`;
-        if (this.correctCountLabel) this.correctCountLabel.string = `${correctCount}/${totalCount}`;
-        if (this.maxComboLabel) this.maxComboLabel.string = `${maxCombo}`;
+        // 满星数(与 ScoreManager.getStarCount 上限一致)
+        const MAX_STARS = 4;
+
+        if (this.finalScoreLabel) this.finalScoreLabel.string = `得分 ${score}`;
+        if (this.correctCountLabel) this.correctCountLabel.string = `答对 ${correctCount}/${totalCount}`;
+        if (this.maxComboLabel) this.maxComboLabel.string = `最高连击 ${maxCombo}`;
         if (this.fastestLabel) {
-            this.fastestLabel.string = fastestReaction < Infinity ? `${fastestReaction.toFixed(2)}秒` : '--';
+            this.fastestLabel.string = fastestReaction < Infinity ? `最快 ${fastestReaction.toFixed(2)}秒` : '最快 --';
         }
         if (this.starsLabel) {
-            this.starsLabel.string = '⭐'.repeat(stars);
+            // 实心星表示已获得,空心星表示未获得,并显示 "n/满星"
+            const clamped = Math.max(0, Math.min(stars, MAX_STARS));
+            const filled = '★'.repeat(clamped);
+            const empty = '☆'.repeat(MAX_STARS - clamped);
+            this.starsLabel.string = `${filled}${empty}  ${clamped}/${MAX_STARS}`;
+        }
+        if (this.commentLabel) {
+            const clamped = Math.max(0, Math.min(stars, MAX_STARS));
+            const pool = COMMENTS[clamped] ?? COMMENTS[0];
+            this.commentLabel.string = pool[Math.floor(Math.random() * pool.length)];
         }
 
         tween(panel)

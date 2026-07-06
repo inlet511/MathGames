@@ -42,9 +42,10 @@ export class ScoreManager extends Component {
             this._combo++;
             if (this._combo > this._maxCombo) this._maxCombo = this._combo;
 
-            // 基础分:按反应时间(秒)线性递减,越快越高
-            // 0s => 100 分,每多 1 秒扣 45 分,最低 10 分
-            const base = Math.max(10, Math.round(100 - reactionTime * 45));
+            // 基础分:按反应时间(秒)线性递减,越快越高。
+            // 覆盖加减题真实反应区间:0.5s 内满 100 分,之后每秒约扣 11 分,8s 左右触底 20 分。
+            // 这样答题快慢在 1~8 秒范围内都有明显区分,不会像以前 2 秒就触底。
+            const base = Math.min(100, Math.max(20, Math.round(100 - (reactionTime - 0.5) * 11)));
 
             // 连击加成:从第 2 连击起,每多一连击 +8 分,最多 +40
             const comboBonus = this._combo >= 2

@@ -1,9 +1,8 @@
 import { _decorator, Color, Component, Label, Node, v3, tween, input, Input, director } from 'cc';
 import { AudioManager } from './AudioManager';
 import { ScoreManager } from './ScoreManager';
-import { FruitSpawner } from './FruitSpawner';
-import { ButtonPanel } from './ButtonPanel';
 import { ResultPanel } from './ResultPanel';
+import { Keypad } from './Keypad';
 const { ccclass, property } = _decorator;
 
 enum GameState {
@@ -16,31 +15,32 @@ enum GameState {
 }
 
 /**
- * 10内加减:混合加法/减法,共 15 道题,不计时。
- *  - 加法 a+b:左侧摆 a 个水果,右侧摆 b 个水果,"+" 连接,答案 a+b。
- *  - 减法 a-b:左侧摆 a 个水果并把其中 b 个划掉,右侧留空,"−" 连接,答案 a-b。
- * 答案限制在 1~9(复用 1~9 答案按钮)。
- * 复用 AudioManager/ScoreManager/ResultPanel/ButtonPanel/FruitSpawner,不使用 TimerManager。
+ * 100内加减:纯数字计算器式输入,共 15 道题,不计时。
+ *  - 加法 a+b:和 <= 100。
+ *  - 减法 a-b:a >= b,结果 >= 0。
+ * 顶部显示算式(如 "45 + 23 = ?"),中部显示已输入数字,下方计算器键盘输入多位数,点"确定"提交。
+ * 复用 AudioManager/ScoreManager/ResultPanel。
  */
-@ccclass('AdditionGameManager')
-export class AdditionGameManager extends Component {
+@ccclass('BigMathManager')
+export class BigMathManager extends Component {
     @property(AudioManager)
     private audioManager: AudioManager | null = null;
 
     @property(ScoreManager)
     private scoreManager: ScoreManager | null = null;
 
-    @property(FruitSpawner)
-    private leftSpawner: FruitSpawner | null = null;
-
-    @property(FruitSpawner)
-    private rightSpawner: FruitSpawner | null = null;
-
-    @property(ButtonPanel)
-    private buttonPanel: ButtonPanel | null = null;
-
     @property(ResultPanel)
     private resultPanel: ResultPanel | null = null;
+
+    @property(Keypad)
+    private keypad: Keypad | null = null;
+
+    @property(Label)
+    private equationLabel: Label | null = null;
+
+    // 当前输入显示
+    @property(Label)
+    private inputLabel: Label | null = null;
 
     @property(Label)
     private countdownLabel: Label | null = null;
@@ -48,31 +48,30 @@ export class AdditionGameManager extends Component {
     @property(Label)
     private feedbackLabel: Label | null = null;
 
-    // 运算符号("+"/"−")显示 Label,复用原 PlusLabel
-    @property(Label)
-    private operatorLabel: Label | null = null;
-
-    // 进度显示 Label(如 "第 3/15 题"),复用原计时 Label
     @property(Label)
     private progressLabel: Label | null = null;
 
-    // 顶部算式 Label(如 "6 + 4 = ?")
-    @property(Label)
-    private equationLabel: Label | null = null;
-
     @property
     private totalQuestions: number = 15;
+
+    // 数值上限:加法和 <= maxValue,减法被减数 <= maxValue。20 => "20内加减",100 => "100内加减"
+    @property
+    private maxValue: number = 100;
 
     private _state: GameState = GameState.IDLE;
     private _currentAnswer: number = 0;
     private _questionStartTime: number = 0;
     private _questionIndex: number = 0;
+    private _inputStr: string = '';
 
     onLoad() {
-        this.buttonPanel?.setAnswerCallback(this.onPlayerAnswer.bind(this));
+        this.keypad?.setCallbacks(
+            this.onDigit.bind(this),
+            this.onClear.bind(this),
+            this.onEnter.bind(this)
+        );
         this.resultPanel?.setCallbacks(this.startGame.bind(this), this.goHome.bind(this));
 
-        // 预加载音效
         this.audioManager?.preload('correct', 'audio/powerup-get-something-big');
         this.audioManager?.preload('wrong', 'audio/elect-menu-go-back');
         this.audioManager?.preload('click', 'audio/select-menu-select');
@@ -102,10 +101,9 @@ export class AdditionGameManager extends Component {
             this.countdownLabel.string = '点击开始';
         }
         if (this.progressLabel) this.progressLabel.string = '';
-        // 未开始/未出题时隐藏运算符和算式,避免默认显示 "+"
-        if (this.operatorLabel) this.operatorLabel.node.active = false;
-        this.showEquation('');
-        this.buttonPanel?.setEnabled(false);
+        if (this.equationLabel) this.equationLabel.string = '';
+        this.setInput('');
+        this.keypad?.setEnabled(false);
     }
 
     public startGame() {
@@ -113,12 +111,9 @@ export class AdditionGameManager extends Component {
         this._questionIndex = 0;
         this.scoreManager?.reset();
         this.resultPanel?.hide();
-        this.leftSpawner?.clearFruits();
-        this.rightSpawner?.clearFruits();
-        this.buttonPanel?.setEnabled(false);
-        // 倒计时期间隐藏运算符和算式
-        if (this.operatorLabel) this.operatorLabel.node.active = false;
-        this.showEquation('');
+        this.keypad?.setEnabled(false);
+        if (this.equationLabel) this.equationLabel.string = '';
+        this.setInput('');
 
         this.showCountdown(3);
     }
@@ -149,55 +144,40 @@ export class AdditionGameManager extends Component {
     private startPlaying() {
         this._state = GameState.PLAYING;
         this.scoreManager?.reset();
-        this.buttonPanel?.setEnabled(true);
+        this.keypad?.setEnabled(true);
         this.nextQuestion();
     }
 
     private nextQuestion() {
-        // 已出满 totalQuestions 题 → 结束
         if (this._questionIndex >= this.totalQuestions) {
             this.endGame();
             return;
         }
         this._questionIndex++;
 
-        this.leftSpawner?.clearFruits();
-        this.rightSpawner?.clearFruits();
-
         // 随机加法或减法
         const isAddition = Math.random() < 0.5;
         let a = 0, b = 0;
 
-        // 让左右两侧共用同一种水果
-        const fruit = this.leftSpawner?.randomFruitName() ?? null;
+        const max = this.maxValue;
 
         if (isAddition) {
-            // a + b,和在 2~10(10以内含10;答案 1~10)
+            // a + b <= max,两数 1~(max-1)
             do {
-                a = 1 + Math.floor(Math.random() * 9);
-                b = 1 + Math.floor(Math.random() * 9);
-            } while (a + b > 10 || a + b < 2);
+                a = 1 + Math.floor(Math.random() * (max - 1));
+                b = 1 + Math.floor(Math.random() * (max - 1));
+            } while (a + b > max);
             this._currentAnswer = a + b;
-
-            if (this.operatorLabel) this.operatorLabel.node.active = true;
-            if (this.operatorLabel) this.operatorLabel.string = '+';
-            this.showEquation(`${a} + ${b} = ?`);
-            this.leftSpawner?.spawn(a, true, true, false, fruit);
-            this.rightSpawner?.spawn(b, true, true, false, fruit);
+            this.setEquation(`${a} + ${b} = ?`);
         } else {
-            // a - b,被减数 a 为 2~10,减数 b 为 1~(a-1),差 1~9(答案 >=1)
-            a = 2 + Math.floor(Math.random() * 9);        // 2~10
-            b = 1 + Math.floor(Math.random() * (a - 1));  // 1~(a-1)
+            // a - b,被减数 a 为 2~max,减数 b 为 1~(a-1);保证差 >=1,避免 a-a=0 或 a-0
+            a = 2 + Math.floor(Math.random() * (max - 1));  // 2~max
+            b = 1 + Math.floor(Math.random() * (a - 1));    // 1~(a-1)
             this._currentAnswer = a - b;
-
-            if (this.operatorLabel) this.operatorLabel.node.active = true;
-            if (this.operatorLabel) this.operatorLabel.string = '−';
-            this.showEquation(`${a} − ${b} = ?`);
-            // 左侧总数 a 个,右侧吃掉 b 个(打叉);答案 = a - b
-            this.leftSpawner?.spawn(a, true, true, false, fruit);
-            this.rightSpawner?.spawn(b, true, true, true, fruit);
+            this.setEquation(`${a} − ${b} = ?`);
         }
 
+        this.setInput('');
         this.updateProgress();
         this.audioManager?.play('appear');
 
@@ -205,27 +185,42 @@ export class AdditionGameManager extends Component {
         this._state = GameState.WAITING_ANSWER;
     }
 
-    private onPlayerAnswer(num: number) {
+    private onDigit(d: number) {
         if (this._state !== GameState.WAITING_ANSWER) return;
-
         this.audioManager?.play('click');
-        this._state = GameState.FEEDBACK;
+        // 最多 3 位数;避免前导 0(输入为空且按 0 时保持单个 0)
+        if (this._inputStr === '0') this._inputStr = '';
+        if (this._inputStr.length >= 3) return;
+        this._inputStr += `${d}`;
+        this.setInput(this._inputStr);
+    }
 
+    private onClear() {
+        if (this._state !== GameState.WAITING_ANSWER) return;
+        this.audioManager?.play('click');
+        this.setInput('');
+    }
+
+    private onEnter() {
+        if (this._state !== GameState.WAITING_ANSWER) return;
+        if (this._inputStr.length === 0) return; // 没输入不提交
+
+        this._state = GameState.FEEDBACK;
         const reactionTime = (Date.now() - this._questionStartTime) / 1000;
-        const correct = num === this._currentAnswer;
+        const value = parseInt(this._inputStr, 10);
+        const correct = value === this._currentAnswer;
 
         const delta = this.scoreManager?.submitAnswer(correct, reactionTime) ?? 0;
 
         if (correct) {
-            this.buttonPanel?.flashCorrect(num);
+            this.keypad?.flash(this.keypad.enterBtn, true);
             this.audioManager?.play('correct');
             this.showFeedback(`加${delta}分`, true);
-
             if ((this.scoreManager?.combo ?? 0) >= 3) {
                 this.audioManager?.play('combo');
             }
         } else {
-            this.buttonPanel?.flashWrong(num);
+            this.keypad?.flash(this.keypad.enterBtn, false);
             this.audioManager?.play('wrong');
             const lost = Math.abs(delta);
             this.showFeedback(lost > 0 ? `扣${lost}分 是${this._currentAnswer}` : `是 ${this._currentAnswer}`, false);
@@ -235,20 +230,18 @@ export class AdditionGameManager extends Component {
             if (this._state === GameState.FEEDBACK) {
                 this.nextQuestion();
             }
-        }, correct ? 0.15 : 1.0);
+        }, correct ? 0.4 : 1.2);
     }
 
     private endGame() {
         this._state = GameState.GAME_OVER;
-        this.buttonPanel?.setEnabled(false);
-        this.leftSpawner?.clearFruits();
-        this.rightSpawner?.clearFruits();
+        this.keypad?.setEnabled(false);
 
         if (this.feedbackLabel) this.feedbackLabel.node.active = false;
         if (this.countdownLabel) this.countdownLabel.node.active = false;
-        if (this.operatorLabel) this.operatorLabel.node.active = false;
+        if (this.equationLabel) this.equationLabel.string = '';
         if (this.progressLabel) this.progressLabel.string = '';
-        this.showEquation('');
+        this.setInput('');
 
         const sm = this.scoreManager;
         if (sm && this.resultPanel) {
@@ -263,14 +256,19 @@ export class AdditionGameManager extends Component {
         }
     }
 
+    private setEquation(text: string) {
+        if (this.equationLabel) this.equationLabel.string = text;
+    }
+
+    private setInput(str: string) {
+        this._inputStr = str;
+        if (this.inputLabel) this.inputLabel.string = str.length > 0 ? str : '_';
+    }
+
     private updateProgress() {
         if (this.progressLabel) {
             this.progressLabel.string = `${this._questionIndex}/${this.totalQuestions}`;
         }
-    }
-
-    private showEquation(text: string) {
-        if (this.equationLabel) this.equationLabel.string = text;
     }
 
     private showFeedback(text: string, isCorrect: boolean) {

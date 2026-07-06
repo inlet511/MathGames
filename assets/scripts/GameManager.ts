@@ -210,7 +210,7 @@ export class GameManager extends Component {
                 this._elapsedTime += (Date.now() - this._questionStartTime) / 1000;
                 this.nextQuestion();
             }
-        }, correct ? 0.6 : 1.0);
+        }, correct ? 0.15 : 1.0);
     }
 
     private onQuestionTimeout() {
