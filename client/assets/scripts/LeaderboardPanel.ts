@@ -3,25 +3,24 @@ import { LeaderboardService, TopEntry } from './LeaderboardService';
 const { ccclass, property } = _decorator;
 
 /**
- * 排行榜子面板:显示当前玩家排名 + 榜单前十,可选填用户名。
- * 由 ResultPanel 打开;自身负责提交本局分数、拉取榜单、渲染。
+ * 排行榜子面板。
  *
- * 交互:
- *  - 打开时 EditBox 预填本地保存的名字(可为空)。
- *  - 点“上榜并查看”:保存名字到本地,提交本局分数(每局仅提交一次),拉取并显示前十 + 我的排名。
- *  - 再次点击只刷新榜单,不重复提交。
+ * 规则:一局分数“恰好提交一次”,匿名是兜底。
+ *  - 打开时:预览本次名次(不入库),显示“本次第 X 名 / 前 Y%”,并拉取前 6 名。
+ *  - 输入名字点“确认上榜”:带名字提交一次,刷新榜单。
+ *  - 不输入 / 不确认,直接点“返回”:匿名提交一次(兜底),关闭面板。
+ *  - ResultPanel 的重玩/返回主页/退出按钮也会触发匿名兜底(见 ResultPanel)。
  */
 @ccclass('LeaderboardPanel')
 export class LeaderboardPanel extends Component {
-    // 面板根节点(默认隐藏)
     @property(Node)
     private panelNode: Node | null = null;
 
-    // “你的排名:第 X 名 / 共 Y 人”
+    // “本次成绩:第 X 名 / 共 Y 人,前 Z%”
     @property(Label)
     private rankLabel: Label | null = null;
 
-    // 前十列表(多行文本)
+    // 前 6 名列表(多行文本)
     @property(Label)
     private listLabel: Label | null = null;
 
@@ -29,19 +28,16 @@ export class LeaderboardPanel extends Component {
     @property(EditBox)
     private nameEditBox: EditBox | null = null;
 
-    // “上榜并查看”按钮
+    // “确认上榜”按钮
     @property(Node)
     private submitBtn: Node | null = null;
 
-    // 返回按钮
+    // 返回按钮(不输入名字直接返回 => 匿名兜底)
     @property(Node)
     private backBtn: Node | null = null;
 
     private _game = '';
     private _score = 0;
-    private _correct = 0;
-    private _total = 0;
-    private _submitted = false; // 本局是否已提交,避免重复上榜
 
     private get panel(): Node {
         return this.panelNode ?? this.node;
@@ -49,17 +45,15 @@ export class LeaderboardPanel extends Component {
 
     onLoad() {
         this.panel.active = false;
-        this.submitBtn?.on(Node.EventType.TOUCH_END, this.onSubmit, this);
-        this.backBtn?.on(Node.EventType.TOUCH_END, this.hide, this);
+        this.submitBtn?.on(Node.EventType.TOUCH_END, this.onConfirm, this);
+        this.backBtn?.on(Node.EventType.TOUCH_END, this.onBack, this);
     }
 
-    /** 由 ResultPanel 在游戏结束时调用,记录本局数据 */
+    /** 由 ResultPanel 在游戏结束时调用,记录本局数据(此时尚未提交) */
     public setResult(game: string, score: number, correct: number, total: number) {
         this._game = game;
         this._score = score;
-        this._correct = correct;
-        this._total = total;
-        this._submitted = false;
+        LeaderboardService.setPending(game, score, correct, total);
     }
 
     /** 打开排行榜面板 */
@@ -76,32 +70,39 @@ export class LeaderboardPanel extends Component {
         if (this.nameEditBox) {
             this.nameEditBox.string = LeaderboardService.getPlayerName();
         }
-        if (this.rankLabel) this.rankLabel.string = '';
+        if (this.rankLabel) this.rankLabel.string = '正在计算排名...';
         if (this.listLabel) this.listLabel.string = '加载中...';
 
-        // 打开即自动上榜并拉取(用当前保存/输入的名字)
-        this.onSubmit();
+        // 预览名次(不提交),再拉榜单
+        LeaderboardService.preview(this._game, this._score)
+            .then((res) => {
+                if (this.rankLabel) {
+                    const suffix = LeaderboardService.submitted ? '(已上榜)' : '';
+                    this.rankLabel.string =
+                        `本次成绩:第 ${res.rank} 名 / 共 ${res.total} 人  超过 ${100 - res.topPercent}% 的玩家${suffix}`;
+                }
+            })
+            .catch(() => {
+                if (this.rankLabel) this.rankLabel.string = '';
+            });
+        this.refreshTop();
     }
 
-    public hide() {
-        this.panel.active = false;
-    }
-
-    private onSubmit() {
+    /** 确认上榜:带名字提交一次,刷新榜单 */
+    private onConfirm() {
         const name = this.nameEditBox ? this.nameEditBox.string : '';
-        LeaderboardService.setPlayerName(name);
 
-        // 已提交过则只刷新榜单
-        if (this._submitted) {
+        // 已提交过(比如之前匿名兜底了):只更新提示,不重复提交
+        if (LeaderboardService.submitted) {
+            if (this.rankLabel) this.rankLabel.string = '本局已上榜,无法重复提交';
             this.refreshTop();
             return;
         }
 
-        LeaderboardService.submit(this._game, name, this._score, this._correct, this._total)
+        LeaderboardService.submitWithName(name)
             .then((res) => {
-                this._submitted = true;
                 if (this.rankLabel) {
-                    this.rankLabel.string = `你的排名:第 ${res.rank} 名 / 共 ${res.total} 人`;
+                    this.rankLabel.string = `已上榜!第 ${res.rank} 名 / 共 ${res.total} 人`;
                 }
                 return this.refreshTop();
             })
@@ -111,8 +112,19 @@ export class LeaderboardPanel extends Component {
             });
     }
 
+    /** 返回:若还没提交,匿名兜底提交一次,然后关闭 */
+    private onBack() {
+        LeaderboardService.flushAnonymous();
+        this.hide();
+    }
+
+    public hide() {
+        this.panel.active = false;
+    }
+
     private refreshTop(): Promise<void> {
-        return LeaderboardService.top(this._game, 10)
+        // 只展示前 6 名
+        return LeaderboardService.top(this._game, 6)
             .then((entries) => this.renderList(entries))
             .catch(() => {
                 if (this.listLabel) this.listLabel.string = '暂时无法连接排行榜\n请检查网络后重试';

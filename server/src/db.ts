@@ -78,6 +78,24 @@ export function insertScore(input: ScoreInput): { rank: number; total: number } 
   return { rank: higher + 1, total: n };
 }
 
+/**
+ * 预览某分数的名次(不写入库)。
+ * total 计为“把这条算进去后的总人数”(现有 + 1),
+ * topPercent = 名次占总数的百分比(越小越靠前),至少 1。
+ */
+export function previewRank(
+  game: GameId,
+  score: number
+): { rank: number; total: number; topPercent: number } {
+  const { higher } = stmtRank.get(game, score) as { higher: number };
+  const { n } = stmtCount.get(game) as { n: number };
+  const rank = higher + 1;
+  const total = n + 1;
+  const topPercent = Math.max(1, Math.round((rank / total) * 100));
+  return { rank, total, topPercent };
+}
+
+
 /** 取某游戏分数前 n 名 */
 export function getTop(game: GameId, n: number): TopEntry[] {
   const rows = stmtTop.all(game, n) as Omit<TopEntry, 'rank'>[];

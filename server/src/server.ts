@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { GAMES, insertScore, getTop, type GameId } from './db.js';
+import { GAMES, insertScore, getTop, previewRank, type GameId } from './db.js';
 
 const PORT = Number(process.env.PORT ?? 4567);
 const HOST = process.env.HOST ?? '0.0.0.0';
@@ -66,6 +66,24 @@ app.get('/api/top', { schema: topSchema }, async (req) => {
   const entries = getTop(q.game, q.n ?? 10);
   return { game: q.game, entries };
 });
+
+// —— 预览某分数名次(不写库),用于打开榜单时显示“本次能排第几 / 前百分之几” ——
+const previewSchema = {
+  querystring: {
+    type: 'object',
+    required: ['game', 'score'],
+    properties: {
+      game: { type: 'string', enum: GAMES as unknown as string[] },
+      score: { type: 'integer', minimum: 0, maximum: 100000 },
+    },
+  },
+};
+
+app.get('/api/preview', { schema: previewSchema }, async (req) => {
+  const q = req.query as { game: GameId; score: number };
+  return previewRank(q.game, q.score); // { rank, total, topPercent }
+});
+
 
 app
   .listen({ port: PORT, host: HOST })

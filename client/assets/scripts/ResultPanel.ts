@@ -1,5 +1,6 @@
 import { _decorator, Component, Label, Node, v3, tween } from 'cc';
 import { LeaderboardPanel } from './LeaderboardPanel';
+import { LeaderboardService } from './LeaderboardService';
 const { ccclass, property } = _decorator;
 
 // 按星数(0~4)分档的鼓励评语库,每档多句随机挑一句;内容积极、有趣、无脏话
@@ -95,8 +96,15 @@ export class ResultPanel extends Component {
 
     onLoad() {
         this.panel.active = false;
-        this.replayBtn?.on(Node.EventType.TOUCH_END, () => this._onReplay?.());
-        this.homeBtn?.on(Node.EventType.TOUCH_END, () => this._onHome?.());
+        // 重玩 / 返回主页前,若还没上榜就匿名兜底提交一次
+        this.replayBtn?.on(Node.EventType.TOUCH_END, () => {
+            LeaderboardService.flushAnonymous();
+            this._onReplay?.();
+        });
+        this.homeBtn?.on(Node.EventType.TOUCH_END, () => {
+            LeaderboardService.flushAnonymous();
+            this._onHome?.();
+        });
         this.leaderboardBtn?.on(Node.EventType.TOUCH_END, () => this.leaderboardPanel?.open());
     }
 

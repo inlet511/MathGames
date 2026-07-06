@@ -25,6 +25,12 @@ export interface SubmitResult {
     total: number;
 }
 
+export interface PreviewResult {
+    rank: number;
+    total: number;
+    topPercent: number;
+}
+
 // 通用请求:用引擎内置 XMLHttpRequest,超时后失败;失败一律 reject,由调用方降级处理
 function request<T>(method: string, url: string, body?: object, timeout = 6000): Promise<T> {
     return new Promise<T>((resolve, reject) => {
@@ -51,6 +57,46 @@ function request<T>(method: string, url: string, body?: object, timeout = 6000):
 }
 
 export class LeaderboardService {
+    // —— 待提交成绩:保证一局分数“恰好提交一次” ——
+    // 游戏结束时 setPending;任何退出路径 flushAnonymous(匿名);排行榜里确认则 submitWithName(带名)。
+    private static _pending: { game: string; score: number; correct: number; total: number } | null = null;
+    private static _submitted = false;
+
+    /** 游戏结束时登记本局成绩(尚未提交) */
+    static setPending(game: string, score: number, correct: number, total: number): void {
+        this._pending = { game, score, correct, total };
+        this._submitted = false;
+    }
+
+    /** 本局是否已提交 */
+    static get submitted(): boolean {
+        return this._submitted;
+    }
+
+    /** 兜底:若还没提交,以匿名提交一次(退出/重玩/直接返回时调用)。fire-and-forget。 */
+    static flushAnonymous(): void {
+        if (!this._pending || this._submitted) return;
+        this._submitted = true;
+        const p = this._pending;
+        // 不 await;Cocos web 下 loadScene 不重载 JS VM,请求会继续完成
+        this.submit(p.game, '', p.score, p.correct, p.total).catch(() => {});
+    }
+
+    /** 带名字确认提交(排行榜里点确认时调用),返回名次;只提交一次 */
+    static submitWithName(name: string): Promise<SubmitResult> {
+        if (!this._pending) return Promise.reject(new Error('没有待提交成绩'));
+        if (this._submitted) return Promise.reject(new Error('已提交'));
+        this._submitted = true;
+        this.setPlayerName(name);
+        const p = this._pending;
+        return this.submit(p.game, name, p.score, p.correct, p.total);
+    }
+
+    /** 当前待提交成绩(供预览用) */
+    static get pending() {
+        return this._pending;
+    }
+
     /** 读取本地保存的用户名(无则空串) */
     static getPlayerName(): string {
         return sys.localStorage.getItem(NAME_KEY) ?? '';
@@ -76,6 +122,14 @@ export class LeaderboardService {
             correct,
             total,
         });
+    }
+
+    /** 预览本次分数名次(不入库):返回名次 / 总人数 / 前百分之几 */
+    static preview(game: string, score: number): Promise<PreviewResult> {
+        return request<PreviewResult>(
+            'GET',
+            `${BASE_URL}/api/preview?game=${encodeURIComponent(game)}&score=${score}`
+        );
     }
 
     /** 取某游戏榜单前 n 名 */
