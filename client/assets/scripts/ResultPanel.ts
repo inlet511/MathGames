@@ -1,4 +1,5 @@
 import { _decorator, Component, Label, Node, v3, tween } from 'cc';
+import { LeaderboardPanel } from './LeaderboardPanel';
 const { ccclass, property } = _decorator;
 
 // 按星数(0~4)分档的鼓励评语库,每档多句随机挑一句;内容积极、有趣、无脏话
@@ -70,6 +71,17 @@ export class ResultPanel extends Component {
     @property(Node)
     private homeBtn: Node | null = null;
 
+    // 排行榜按钮 + 排行榜子面板
+    @property(Node)
+    private leaderboardBtn: Node | null = null;
+
+    @property(LeaderboardPanel)
+    private leaderboardPanel: LeaderboardPanel | null = null;
+
+    // 本游戏标识:count / addition / small / big。四个场景分别填写。
+    @property
+    private gameId: string = '';
+
     // 真正的结算面板节点(脚本挂在独立空节点上,需显式引用面板)
     @property(Node)
     private panelNode: Node | null = null;
@@ -85,6 +97,7 @@ export class ResultPanel extends Component {
         this.panel.active = false;
         this.replayBtn?.on(Node.EventType.TOUCH_END, () => this._onReplay?.());
         this.homeBtn?.on(Node.EventType.TOUCH_END, () => this._onHome?.());
+        this.leaderboardBtn?.on(Node.EventType.TOUCH_END, () => this.leaderboardPanel?.open());
     }
 
     public setCallbacks(onReplay: () => void, onHome: () => void) {
@@ -118,6 +131,9 @@ export class ResultPanel extends Component {
             const pool = COMMENTS[clamped] ?? COMMENTS[0];
             this.commentLabel.string = pool[Math.floor(Math.random() * pool.length)];
         }
+
+        // 把本局成绩交给排行榜面板(点击排行榜按钮时提交并展示)
+        this.leaderboardPanel?.setResult(this.gameId, score, correctCount, totalCount);
 
         tween(panel)
             .to(0.3, { scale: v3(1.1, 1.1, 1) }, { easing: 'backOut' })
