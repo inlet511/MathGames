@@ -52,7 +52,7 @@
 | 文件 | 用途 |
 |------|------|
 | `select-menu-select.wav` | 点击按钮 |
-| `powerup-get-something-big.wav` | 答对 |
+| `correct-selection-sound.wav` | 答对 |
 | `elect-menu-go-back.wav` | 答错 |
 | `jump.wav` | 水果出现 |
 | `laser.wav` | 连击特效 |

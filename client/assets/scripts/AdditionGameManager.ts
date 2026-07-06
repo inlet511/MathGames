@@ -73,7 +73,7 @@ export class AdditionGameManager extends Component {
         this.resultPanel?.setCallbacks(this.startGame.bind(this), this.goHome.bind(this));
 
         // 预加载音效
-        this.audioManager?.preload('correct', 'audio/powerup-get-something-big');
+        this.audioManager?.preload('correct', 'audio/correct-selection-sound');
         this.audioManager?.preload('wrong', 'audio/elect-menu-go-back');
         this.audioManager?.preload('click', 'audio/select-menu-select');
         this.audioManager?.preload('appear', 'audio/jump');

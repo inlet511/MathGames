@@ -22,7 +22,7 @@
 预加载音效到缓存。
 
 ```typescript
-AudioManager.instance.preload('correct', 'audio/powerup-get-something-big');
+AudioManager.instance.preload('correct', 'audio/correct-selection-sound');
 ```
 
 - `name`: 音效名称，用于后续播放
