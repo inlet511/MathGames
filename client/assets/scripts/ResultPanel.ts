@@ -1,7 +1,15 @@
-import { _decorator, Component, Label, Node, v3, tween } from 'cc';
+import { _decorator, Component, Label, Node, v3, tween, director } from 'cc';
 import { LeaderboardPanel } from './LeaderboardPanel';
 import { LeaderboardService } from './LeaderboardService';
 const { ccclass, property } = _decorator;
+
+// 场景名 → 游戏标识。做成预制体后 gameId 不再每场景手填,运行时按当前场景名推断。
+const SCENE_TO_GAME: Record<string, string> = {
+    Count: 'count',
+    Addition: 'addition',
+    SmallMath: 'small',
+    BigMath: 'big',
+};
 
 // 按星数(0~4)分档的鼓励评语库,每档多句随机挑一句;内容积极、有趣、无脏话
 const COMMENTS: string[][] = [
@@ -79,7 +87,7 @@ export class ResultPanel extends Component {
     @property(LeaderboardPanel)
     private leaderboardPanel: LeaderboardPanel | null = null;
 
-    // 本游戏标识:count / addition / small / big。四个场景分别填写。
+    // 本游戏标识:留空则运行时按场景名推断(预制体共用,无需每场景填);非空则作为覆盖值。
     @property
     private gameId: string = '';
 
@@ -89,6 +97,13 @@ export class ResultPanel extends Component {
 
     private _onReplay: (() => void) | null = null;
     private _onHome: (() => void) | null = null;
+
+    // 解析当前游戏标识:优先用手填的 gameId,否则按场景名推断
+    private resolveGameId(): string {
+        if (this.gameId && this.gameId.length > 0) return this.gameId;
+        const sceneName = director.getScene()?.name ?? '';
+        return SCENE_TO_GAME[sceneName] ?? '';
+    }
 
     private get panel(): Node {
         return this.panelNode ?? this.node;
@@ -141,7 +156,7 @@ export class ResultPanel extends Component {
         }
 
         // 把本局成绩交给排行榜面板(点击排行榜按钮时提交并展示)
-        this.leaderboardPanel?.setResult(this.gameId, score, correctCount, totalCount);
+        this.leaderboardPanel?.setResult(this.resolveGameId(), score, correctCount, totalCount);
 
         tween(panel)
             .to(0.3, { scale: v3(1.1, 1.1, 1) }, { easing: 'backOut' })
