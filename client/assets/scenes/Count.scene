@@ -22,7 +22,9 @@
     ],
     "_active": true,
     "_components": [],
-    "_prefab": null,
+    "_prefab": {
+      "__id__": 181
+    },
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
@@ -52,7 +54,7 @@
     },
     "autoReleaseAssets": false,
     "_globals": {
-      "__id__": 173
+      "__id__": 182
     },
     "_id": "dc7bfc9b-5de6-4903-8cb3-52d3a60dad0d"
   },
@@ -105,16 +107,19 @@
         "__id__": 163
       },
       {
+        "__id__": 171
+      },
+      {
         "__id__": 77
       }
     ],
     "_active": true,
     "_components": [
       {
-        "__id__": 171
+        "__id__": 179
       },
       {
-        "__id__": 172
+        "__id__": 180
       }
     ],
     "_prefab": null,
@@ -3193,7 +3198,7 @@
         "__id__": 122
       }
     ],
-    "_active": false,
+    "_active": true,
     "_components": [
       {
         "__id__": 162
@@ -7118,6 +7123,117 @@
     "_id": "exitbtn-Game-4"
   },
   {
+    "__type__": "cc.Node",
+    "_objFlags": 0,
+    "_parent": {
+      "__id__": 2
+    },
+    "_prefab": {
+      "__id__": 172
+    },
+    "__editorExtras__": {}
+  },
+  {
+    "__type__": "cc.PrefabInfo",
+    "root": {
+      "__id__": 171
+    },
+    "asset": {
+      "__uuid__": "4af6c663-ebdf-43ef-a565-12556ec5aa34",
+      "__expectedType__": "cc.Prefab"
+    },
+    "fileId": "05j69qf9tHJ6oreyI/VM9c",
+    "instance": {
+      "__id__": 173
+    },
+    "targetOverrides": null,
+    "nestedPrefabInstanceRoots": null
+  },
+  {
+    "__type__": "cc.PrefabInstance",
+    "fileId": "3aZSrOxdBN0pMR2wUBmbIe",
+    "prefabRootNode": null,
+    "mountedChildren": [],
+    "mountedComponents": [],
+    "propertyOverrides": [
+      {
+        "__id__": 174
+      },
+      {
+        "__id__": 176
+      },
+      {
+        "__id__": 177
+      },
+      {
+        "__id__": 178
+      }
+    ],
+    "removedComponents": []
+  },
+  {
+    "__type__": "CCPropertyOverrideInfo",
+    "targetInfo": {
+      "__id__": 175
+    },
+    "propertyPath": [
+      "_name"
+    ],
+    "value": "EndGameUI"
+  },
+  {
+    "__type__": "cc.TargetInfo",
+    "localID": [
+      "05j69qf9tHJ6oreyI/VM9c"
+    ]
+  },
+  {
+    "__type__": "CCPropertyOverrideInfo",
+    "targetInfo": {
+      "__id__": 175
+    },
+    "propertyPath": [
+      "_lpos"
+    ],
+    "value": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    }
+  },
+  {
+    "__type__": "CCPropertyOverrideInfo",
+    "targetInfo": {
+      "__id__": 175
+    },
+    "propertyPath": [
+      "_lrot"
+    ],
+    "value": {
+      "__type__": "cc.Quat",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    }
+  },
+  {
+    "__type__": "CCPropertyOverrideInfo",
+    "targetInfo": {
+      "__id__": 175
+    },
+    "propertyPath": [
+      "_euler"
+    ],
+    "value": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    }
+  },
+  {
     "__type__": "cc.UITransform",
     "_name": "",
     "_objFlags": 0,
@@ -7156,30 +7272,43 @@
     "_id": "0a5H910WBMcY/XyvIPPcoz"
   },
   {
+    "__type__": "cc.PrefabInfo",
+    "root": null,
+    "asset": null,
+    "fileId": "dc7bfc9b-5de6-4903-8cb3-52d3a60dad0d",
+    "instance": null,
+    "targetOverrides": null,
+    "nestedPrefabInstanceRoots": [
+      {
+        "__id__": 171
+      }
+    ]
+  },
+  {
     "__type__": "cc.SceneGlobals",
     "ambient": {
-      "__id__": 174
+      "__id__": 183
     },
     "shadows": {
-      "__id__": 175
+      "__id__": 184
     },
     "_skybox": {
-      "__id__": 176
+      "__id__": 185
     },
     "fog": {
-      "__id__": 177
+      "__id__": 186
     },
     "octree": {
-      "__id__": 178
+      "__id__": 187
     },
     "skin": {
-      "__id__": 179
+      "__id__": 188
     },
     "lightProbeInfo": {
-      "__id__": 180
+      "__id__": 189
     },
     "postSettings": {
-      "__id__": 181
+      "__id__": 190
     },
     "bakedWithStationaryMainLight": false,
     "bakedWithHighpLightmap": false

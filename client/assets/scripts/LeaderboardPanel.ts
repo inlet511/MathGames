@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Label, EditBox, v3, tween } from 'cc';
+import { _decorator, Component, Node, Label, EditBox, v3, tween, sys } from 'cc';
 import { LeaderboardService, TopEntry } from './LeaderboardService';
 const { ccclass, property } = _decorator;
 
@@ -36,6 +36,10 @@ export class LeaderboardPanel extends Component {
     @property(Node)
     private backBtn: Node | null = null;
 
+    // 编辑输入框时,整个面板上移的距离(避开手机软键盘遮挡)。仅移动端生效。
+    @property
+    private keyboardLiftY: number = 300;
+
     private _game = '';
     private _score = 0;
 
@@ -47,6 +51,39 @@ export class LeaderboardPanel extends Component {
         this.panel.active = false;
         this.submitBtn?.on(Node.EventType.TOUCH_END, this.onConfirm, this);
         this.backBtn?.on(Node.EventType.TOUCH_END, this.onBack, this);
+        // 移动端:聚焦输入框时上移面板,失焦后复位,避免软键盘遮住输入框和按钮
+        if (this.nameEditBox) {
+            this.nameEditBox.node.on('editing-did-began', this.onEditBegan, this);
+            this.nameEditBox.node.on('editing-did-ended', this.onEditEnded, this);
+        }
+    }
+
+    onDestroy() {
+        if (this.nameEditBox) {
+            this.nameEditBox.node.off('editing-did-began', this.onEditBegan, this);
+            this.nameEditBox.node.off('editing-did-ended', this.onEditEnded, this);
+        }
+    }
+
+    // 是否需要为软键盘让位:移动端(含手机浏览器 H5)才有软键盘;桌面端物理键盘不占屏,不上移
+    private get liftForKeyboard(): boolean {
+        return this.keyboardLiftY > 0 && sys.isMobile;
+    }
+
+    private onEditBegan() {
+        if (!this.liftForKeyboard) return;
+        tween(this.panel).stop();
+        tween(this.panel)
+            .to(0.2, { position: v3(0, this.keyboardLiftY, 0) }, { easing: 'quadOut' })
+            .start();
+    }
+
+    private onEditEnded() {
+        if (!this.liftForKeyboard) return;
+        tween(this.panel).stop();
+        tween(this.panel)
+            .to(0.2, { position: v3(0, 0, 0) }, { easing: 'quadOut' })
+            .start();
     }
 
     /** 由 ResultPanel 在游戏结束时调用,记录本局数据(此时尚未提交) */
@@ -61,6 +98,8 @@ export class LeaderboardPanel extends Component {
         const panel = this.panel;
         panel.active = true;
         panel.setScale(v3(0, 0, 0));
+        // 复位到未上移状态(上次编辑上移后可能停在偏移位置)
+        panel.setPosition(v3(0, 0, 0));
         tween(panel)
             .to(0.25, { scale: v3(1.05, 1.05, 1) }, { easing: 'backOut' })
             .to(0.1, { scale: v3(1, 1, 1) })
