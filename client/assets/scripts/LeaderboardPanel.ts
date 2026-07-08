@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Label, EditBox, v3, tween, sys } from 'cc';
+import { _decorator, Component, Node, Label, EditBox, v3, tween, sys, isValid } from 'cc';
 import { LeaderboardService, TopEntry } from './LeaderboardService';
 const { ccclass, property } = _decorator;
 
@@ -59,9 +59,18 @@ export class LeaderboardPanel extends Component {
     }
 
     onDestroy() {
-        if (this.nameEditBox) {
-            this.nameEditBox.node.off('editing-did-began', this.onEditBegan, this);
-            this.nameEditBox.node.off('editing-did-ended', this.onEditEnded, this);
+        // 场景销毁时子节点可能先于本组件被释放。此时 this.submitBtn 等仍是残留引用,
+        // 但节点内部已失效,直接调用 .off 会在引擎内部崩溃。用 isValid 判断已销毁对象。
+        const editNode = this.nameEditBox?.node;
+        if (isValid(editNode)) {
+            editNode.off('editing-did-began', this.onEditBegan, this);
+            editNode.off('editing-did-ended', this.onEditEnded, this);
+        }
+        if (isValid(this.submitBtn)) {
+            this.submitBtn.off(Node.EventType.TOUCH_END, this.onConfirm, this);
+        }
+        if (isValid(this.backBtn)) {
+            this.backBtn.off(Node.EventType.TOUCH_END, this.onBack, this);
         }
     }
 
@@ -118,7 +127,7 @@ export class LeaderboardPanel extends Component {
                 if (this.rankLabel) {
                     const suffix = LeaderboardService.submitted ? '(已上榜)' : '';
                     this.rankLabel.string =
-                        `本次成绩:第 ${res.rank} 名 / 共 ${res.total} 人  超过 ${100 - res.topPercent}% 的玩家${suffix}`;
+                        `本次成绩:第 ${res.rank} 名 / 共 ${res.total} 人\n超过 ${100 - res.topPercent}% 的玩家${suffix}`;
                 }
             })
             .catch(() => {
