@@ -1468,7 +1468,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 0,
+      "y": 5,
       "z": 0
     },
     "_lrot": {
@@ -1508,8 +1508,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 112,
-      "height": 40.32
+      "width": 108,
+      "height": 44.32
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -1547,8 +1547,8 @@
     "_string": "再来一次",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 28,
-    "_fontSize": 28,
+    "_actualFontSize": 26,
+    "_fontSize": 26,
     "_fontFamily": "Arial",
     "_lineHeight": 32,
     "_overflow": 0,
@@ -1561,7 +1561,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": false,
+    "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 0,
@@ -1654,10 +1654,10 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "f95a03f6-9424-4cca-b9cc-9bb1b08de03e@f9941",
+      "__uuid__": "eee77b52-b993-429f-b1b8-b61b4323ed67@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
-    "_type": 0,
+    "_type": 1,
     "_fillType": 0,
     "_sizeMode": 0,
     "_fillCenter": {
@@ -1719,7 +1719,10 @@
       "b": 124,
       "a": 255
     },
-    "_normalSprite": null,
+    "_normalSprite": {
+      "__uuid__": "eee77b52-b993-429f-b1b8-b61b4323ed67@f9941",
+      "__expectedType__": "cc.SpriteFrame"
+    },
     "_hoverSprite": null,
     "_pressedSprite": null,
     "_disabledSprite": null,
@@ -1826,7 +1829,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 0,
+      "y": 5,
       "z": 0
     },
     "_lrot": {
@@ -1866,8 +1869,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 78,
-      "height": 40.32
+      "width": 82,
+      "height": 44.32
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -1915,11 +1918,11 @@
     "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
-    "_isBold": true,
+    "_isBold": false,
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": false,
+    "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 0,
@@ -2012,10 +2015,10 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "f95a03f6-9424-4cca-b9cc-9bb1b08de03e@f9941",
+      "__uuid__": "eee77b52-b993-429f-b1b8-b61b4323ed67@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
-    "_type": 0,
+    "_type": 1,
     "_fillType": 0,
     "_sizeMode": 0,
     "_fillCenter": {
@@ -2078,7 +2081,7 @@
       "a": 255
     },
     "_normalSprite": {
-      "__uuid__": "f95a03f6-9424-4cca-b9cc-9bb1b08de03e@f9941",
+      "__uuid__": "eee77b52-b993-429f-b1b8-b61b4323ed67@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_hoverSprite": null,
@@ -2187,7 +2190,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 0,
+      "y": 5,
       "z": 0
     },
     "_lrot": {
@@ -2227,8 +2230,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 112,
-      "height": 40.32
+      "width": 108,
+      "height": 44.32
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -2266,8 +2269,8 @@
     "_string": "返回主页",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 28,
-    "_fontSize": 28,
+    "_actualFontSize": 26,
+    "_fontSize": 26,
     "_fontFamily": "Arial",
     "_lineHeight": 32,
     "_overflow": 0,
@@ -2280,7 +2283,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": false,
+    "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 0,
@@ -2373,10 +2376,10 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "f95a03f6-9424-4cca-b9cc-9bb1b08de03e@f9941",
+      "__uuid__": "eee77b52-b993-429f-b1b8-b61b4323ed67@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
-    "_type": 0,
+    "_type": 1,
     "_fillType": 0,
     "_sizeMode": 0,
     "_fillCenter": {
@@ -2438,7 +2441,10 @@
       "b": 124,
       "a": 255
     },
-    "_normalSprite": null,
+    "_normalSprite": {
+      "__uuid__": "eee77b52-b993-429f-b1b8-b61b4323ed67@f9941",
+      "__expectedType__": "cc.SpriteFrame"
+    },
     "_hoverSprite": null,
     "_pressedSprite": null,
     "_disabledSprite": null,
@@ -5275,7 +5281,6 @@
       "__id__": 0
     },
     "fileId": "05j69qf9tHJ6oreyI/VM9c",
-    "instance": null,
     "targetOverrides": null
   }
 ]

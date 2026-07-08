@@ -286,8 +286,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 288,
-      "height": 95.76
+      "width": 292,
+      "height": 99.76
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -333,7 +333,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": false,
+    "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 0,
@@ -570,7 +570,7 @@
       "Addition",
       "SmallMath",
       "BigMath",
-      "",
+      "Split",
       ""
     ],
     "_id": "e04504b0-ccf6-4248-84c6-a66885965803"
@@ -802,10 +802,10 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "f95a03f6-9424-4cca-b9cc-9bb1b08de03e@f9941",
+      "__uuid__": "eee77b52-b993-429f-b1b8-b61b4323ed67@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
-    "_type": 0,
+    "_type": 1,
     "_fillType": 0,
     "_sizeMode": 0,
     "_fillCenter": {
@@ -1047,10 +1047,10 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "f95a03f6-9424-4cca-b9cc-9bb1b08de03e@f9941",
+      "__uuid__": "eee77b52-b993-429f-b1b8-b61b4323ed67@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
-    "_type": 0,
+    "_type": 1,
     "_fillType": 0,
     "_sizeMode": 0,
     "_fillCenter": {
@@ -1292,10 +1292,10 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "f95a03f6-9424-4cca-b9cc-9bb1b08de03e@f9941",
+      "__uuid__": "eee77b52-b993-429f-b1b8-b61b4323ed67@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
-    "_type": 0,
+    "_type": 1,
     "_fillType": 0,
     "_sizeMode": 0,
     "_fillCenter": {
@@ -1537,10 +1537,10 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "f95a03f6-9424-4cca-b9cc-9bb1b08de03e@f9941",
+      "__uuid__": "eee77b52-b993-429f-b1b8-b61b4323ed67@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
-    "_type": 0,
+    "_type": 1,
     "_fillType": 0,
     "_sizeMode": 0,
     "_fillCenter": {
@@ -1697,7 +1697,7 @@
       "b": 255,
       "a": 200
     },
-    "_string": "敬请期待",
+    "_string": "数的分成",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 52,
@@ -1776,16 +1776,16 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 120,
-      "g": 120,
-      "b": 130,
+      "r": 182,
+      "g": 101,
+      "b": 146,
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "f95a03f6-9424-4cca-b9cc-9bb1b08de03e@f9941",
+      "__uuid__": "eee77b52-b993-429f-b1b8-b61b4323ed67@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
-    "_type": 0,
+    "_type": 1,
     "_fillType": 0,
     "_sizeMode": 0,
     "_fillCenter": {
@@ -2027,10 +2027,10 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "f95a03f6-9424-4cca-b9cc-9bb1b08de03e@f9941",
+      "__uuid__": "eee77b52-b993-429f-b1b8-b61b4323ed67@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
-    "_type": 0,
+    "_type": 1,
     "_fillType": 0,
     "_sizeMode": 0,
     "_fillCenter": {

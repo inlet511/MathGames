@@ -8,7 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DB_PATH = join(__dirname, '..', 'leaderboard.db');
 
 // 合法的游戏标识,与前端一一对应
-export const GAMES = ['count', 'addition', 'small', 'big'] as const;
+export const GAMES = ['count', 'addition', 'small', 'big', 'split'] as const;
 export type GameId = (typeof GAMES)[number];
 
 const db = new Database(DB_PATH);

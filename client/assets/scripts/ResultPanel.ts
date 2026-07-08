@@ -9,6 +9,7 @@ const SCENE_TO_GAME: Record<string, string> = {
     Addition: 'addition',
     SmallMath: 'small',
     BigMath: 'big',
+    Split: 'split',
 };
 
 // 按星数(0~4)分档的鼓励评语库,每档多句随机挑一句;内容积极、有趣、无脏话
@@ -157,6 +158,8 @@ export class ResultPanel extends Component {
 
         // 把本局成绩交给排行榜面板(点击排行榜按钮时提交并展示)
         this.leaderboardPanel?.setResult(this.resolveGameId(), score, correctCount, totalCount);
+        // 预热排行榜面板,消除首次点击"排行榜"时的卡顿(字体图集/DOM input 等一次性开销)
+        this.leaderboardPanel?.prewarm();
 
         tween(panel)
             .to(0.3, { scale: v3(1.1, 1.1, 1) }, { easing: 'backOut' })

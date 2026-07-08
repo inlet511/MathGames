@@ -102,6 +102,23 @@ export class LeaderboardPanel extends Component {
         LeaderboardService.setPending(game, score, correct, total);
     }
 
+    /**
+     * 预热:提前激活面板并渲染一帧(移到屏幕外),支付首次的一次性开销——
+     * Label 字体图集生成、Web 端 EditBox 创建 DOM input、子树首次激活等。
+     * 这样玩家真正点"排行榜"时能瞬间弹出,不再有首次卡顿。不发网络请求。
+     * 由 ResultPanel 在结算面板出现时调用。
+     */
+    public prewarm() {
+        const panel = this.panel;
+        if (panel.active) return;
+        panel.active = true;
+        panel.setPosition(v3(0, 1e5, 0)); // 移到屏幕外渲染一帧,避免玩家看到
+        this.scheduleOnce(() => {
+            panel.active = false;
+            panel.setPosition(v3(0, 0, 0));
+        }, 0);
+    }
+
     /** 打开排行榜面板 */
     public open() {
         const panel = this.panel;

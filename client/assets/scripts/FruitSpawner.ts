@@ -1,10 +1,9 @@
 import { _decorator, Color, Component, instantiate, Label, Layers, Node, Prefab, resources, Sprite, SpriteFrame, UITransform, Vec3, tween, v3 } from 'cc';
 const { ccclass, property } = _decorator;
 
-const FRUIT_NAMES = [
-    '菠萝', '草莓', '橙子', '番茄', '哈密瓜', '蓝莓', '芒果', '牛油果',
-    '苹果', '青柠', '桑葚', '石榴', '桃子', '西瓜', '西梅', '香蕉', '小番茄', '樱桃'
-];
+// 素材图统一放在 resources/images/items 下(icon_*.png),整目录动态加载,
+// 不再依赖固定的中文水果名 —— 增删图片无需改代码。
+const ITEMS_DIR = 'images/items';
 
 @ccclass('FruitSpawner')
 export class FruitSpawner extends Component {
@@ -25,17 +24,16 @@ export class FruitSpawner extends Component {
     }
 
     private preloadFruits() {
-        let loaded = 0;
-        const total = FRUIT_NAMES.length;
-        for (const name of FRUIT_NAMES) {
-            resources.load(`images/${name}/spriteFrame`, SpriteFrame, (err, sf) => {
-                if (!err && sf) {
-                    this._spriteFrames.set(name, sf);
+        // 整目录加载 items 下所有 SpriteFrame,用资源名(如 icon_113)作为 key
+        resources.loadDir(ITEMS_DIR, SpriteFrame, (err, frames) => {
+            if (!err && frames) {
+                for (const sf of frames) {
+                    const key = sf.name || sf.uuid;
+                    this._spriteFrames.set(key, sf);
                 }
-                loaded++;
-                if (loaded >= total) this._loaded = true;
-            });
-        }
+            }
+            this._loaded = true;
+        });
     }
 
     public isReady(): boolean { return this._loaded; }

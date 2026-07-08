@@ -23,7 +23,7 @@
     "_active": true,
     "_components": [],
     "_prefab": {
-      "__id__": 138
+      "__id__": 139
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -54,7 +54,7 @@
     },
     "autoReleaseAssets": false,
     "_globals": {
-      "__id__": 141
+      "__id__": 142
     },
     "_id": "afe875ab-9425-4f16-8fc8-b2e55ddd92a6"
   },
@@ -122,10 +122,10 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 136
+        "__id__": 137
       },
       {
-        "__id__": 137
+        "__id__": 138
       }
     ],
     "_prefab": null,
@@ -5392,6 +5392,9 @@
       },
       {
         "__id__": 135
+      },
+      {
+        "__id__": 136
       }
     ],
     "removedComponents": []
@@ -5459,6 +5462,16 @@
     }
   },
   {
+    "__type__": "CCPropertyOverrideInfo",
+    "targetInfo": {
+      "__id__": 132
+    },
+    "propertyPath": [
+      "_active"
+    ],
+    "value": false
+  },
+  {
     "__type__": "cc.UITransform",
     "_name": "",
     "_objFlags": 0,
@@ -5504,7 +5517,7 @@
     "instance": null,
     "targetOverrides": [
       {
-        "__id__": 139
+        "__id__": 140
       }
     ],
     "nestedPrefabInstanceRoots": [
@@ -5526,7 +5539,7 @@
       "__id__": 128
     },
     "targetInfo": {
-      "__id__": 140
+      "__id__": 141
     }
   },
   {
@@ -5538,28 +5551,28 @@
   {
     "__type__": "cc.SceneGlobals",
     "ambient": {
-      "__id__": 142
-    },
-    "shadows": {
       "__id__": 143
     },
-    "_skybox": {
+    "shadows": {
       "__id__": 144
     },
-    "fog": {
+    "_skybox": {
       "__id__": 145
     },
-    "octree": {
+    "fog": {
       "__id__": 146
     },
-    "skin": {
+    "octree": {
       "__id__": 147
     },
-    "lightProbeInfo": {
+    "skin": {
       "__id__": 148
     },
-    "postSettings": {
+    "lightProbeInfo": {
       "__id__": 149
+    },
+    "postSettings": {
+      "__id__": 150
     },
     "bakedWithStationaryMainLight": false,
     "bakedWithHighpLightmap": false
