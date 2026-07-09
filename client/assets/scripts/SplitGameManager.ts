@@ -258,7 +258,8 @@ export class SplitGameManager extends Component {
         label.color = isUnknown ? new Color(231, 76, 60) : new Color(60, 60, 60);
     }
 
-    // 画两根斜线:上堆中心 → 左下堆中心、上堆中心 → 右下堆中心。
+    // 画整套示意图:三个区域各用一个方框包围,再从上框边缘精确连线到左右两个下框边缘。
+    // 方框尺寸取各 box 节点的 UITransform,保证与固定的水果区域一致。
     // 用世界坐标转 Graphics 本地坐标,兼容任意节点层级。
     private drawLines() {
         const g = this.lineGraphics;
@@ -269,42 +270,62 @@ export class SplitGameManager extends Component {
 
         const toLocal = (n: Node) => {
             const world = n.getWorldPosition();
-            return gTransform.convertToNodeSpaceAR(world);
+            const p = gTransform.convertToNodeSpaceAR(world);
+            return { x: p.x, y: p.y };
+        };
+        const halfOf = (n: Node) => {
+            const t = n.getComponent(UITransform);
+            return { hw: (t?.width ?? 0) / 2, hh: (t?.height ?? 0) / 2 };
         };
 
         const top = toLocal(this.topBox);
         const left = toLocal(this.leftBox);
         const right = toLocal(this.rightBox);
-
-        // 端点内缩:线从上堆下沿出发,到下堆上沿结束,避免穿过水果/方框
-        const pad = 50;
-        const shorten = (from: { x: number; y: number }, to: { x: number; y: number }) => {
-            const dx = to.x - from.x;
-            const dy = to.y - from.y;
-            const len = Math.sqrt(dx * dx + dy * dy) || 1;
-            const ux = dx / len;
-            const uy = dy / len;
-            return {
-                sx: from.x + ux * pad,
-                sy: from.y + uy * pad,
-                ex: to.x - ux * pad,
-                ey: to.y - uy * pad,
-            };
-        };
+        const th = halfOf(this.topBox);
+        const lh = halfOf(this.leftBox);
+        const rh = halfOf(this.rightBox);
 
         g.clear();
-        g.lineWidth = 6;
-        g.strokeColor = new Color(120, 120, 120, 255);
+        g.lineWidth = 5;
+        g.strokeColor = new Color(150, 150, 150, 255);
 
-        const l = shorten(top, left);
-        g.moveTo(l.sx, l.sy);
-        g.lineTo(l.ex, l.ey);
+        // 三个方框:包围每个固定区域(含未知数框)
+        this.strokeFrame(g, top, th);
+        this.strokeFrame(g, left, lh);
+        this.strokeFrame(g, right, rh);
 
-        const r = shorten(top, right);
-        g.moveTo(r.sx, r.sy);
-        g.lineTo(r.ex, r.ey);
+        // 两根连线:从上框边缘出发,精确接触左/右下框边缘
+        this.strokeConnector(g, top, th, left, lh);
+        this.strokeConnector(g, top, th, right, rh);
 
         g.stroke();
+    }
+
+    // 以 center 为中心、half 为半宽高描一个矩形边框
+    private strokeFrame(g: Graphics, c: { x: number; y: number }, h: { hw: number; hh: number }) {
+        g.rect(c.x - h.hw, c.y - h.hh, h.hw * 2, h.hh * 2);
+    }
+
+    // 连接两个矩形框:分别求射线与各自框边界的交点作为端点,使连线精确贴合框边缘
+    private strokeConnector(
+        g: Graphics,
+        a: { x: number; y: number }, ah: { hw: number; hh: number },
+        b: { x: number; y: number }, bh: { hw: number; hh: number }
+    ) {
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const ux = dx / len;
+        const uy = dy / len;
+        // 从矩形中心沿单位方向到达边界的距离(取先碰到的那条边)
+        const edgeDist = (h: { hw: number; hh: number }) => Math.min(
+            ux !== 0 ? h.hw / Math.abs(ux) : Infinity,
+            uy !== 0 ? h.hh / Math.abs(uy) : Infinity
+        );
+        const ta = edgeDist(ah);
+        const tb = edgeDist(bh);
+        g.moveTo(a.x + ux * ta, a.y + uy * ta);
+        g.lineTo(b.x - ux * tb, b.y - uy * tb);
     }
 
     private onPlayerAnswer(num: number) {

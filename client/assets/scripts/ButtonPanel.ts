@@ -1,4 +1,5 @@
 import { _decorator, Component, Node, Label, UITransform, Color, Sprite, Button, v3, tween } from 'cc';
+import { BasicButton } from './BasicButton';
 const { ccclass, property } = _decorator;
 
 const BUTTON_COLORS = [
@@ -20,22 +21,39 @@ export class ButtonPanel extends Component {
     onLoad() {
         for (let i = 0; i < this.buttons.length; i++) {
             const btn = this.buttons[i];
-            const num = i + 1;
 
-            // 设置颜色(取模,支持任意数量按钮,如加法用 1~9)
-            const sprite = btn.getComponent(Sprite);
-            if (sprite) sprite.color = BUTTON_COLORS[i % BUTTON_COLORS.length];
+            // 数字优先取按钮上的 BasicButton 组件(prefab 自配置);
+            // 没有该组件的旧场景回退到"下标+1",并沿用旧的按下标配色。
+            const numButton = btn.getComponent(BasicButton);
+            const num = numButton ? numButton.number : i + 1;
 
-            // 设置数字
-            const label = btn.getComponentInChildren(Label);
-            if (label) label.string = `${num}`;
+            if (numButton) {
+                // prefab 自己已在 onLoad 里刷好数字与颜色,这里不覆盖
+                numButton.apply();
+            } else {
+                const sprite = btn.getComponent(Sprite);
+                if (sprite) sprite.color = BUTTON_COLORS[i % BUTTON_COLORS.length];
+                const label = btn.getComponentInChildren(Label);
+                if (label) label.string = `${num}`;
+            }
 
-            // 点击事件
+            // 点击事件(闭包捕获该按钮对应的数字)
             btn.on(Node.EventType.TOUCH_END, () => {
                 if (!this._enabled) return;
                 this.onButtonClick(num);
             });
         }
+    }
+
+    // 按数字找到对应按钮节点(支持任意数字/顺序,不再假设 num-1 即下标)
+    private findButton(num: number): Node | null {
+        for (let i = 0; i < this.buttons.length; i++) {
+            const btn = this.buttons[i];
+            const nb = btn.getComponent(BasicButton);
+            const value = nb ? nb.number : i + 1;
+            if (value === num) return btn;
+        }
+        return null;
     }
 
     public setEnabled(enabled: boolean) {
@@ -52,17 +70,20 @@ export class ButtonPanel extends Component {
 
     private onButtonClick(num: number) {
         // 按下动画
-        const btn = this.buttons[num - 1];
-        tween(btn)
-            .to(0.05, { scale: v3(0.9, 0.9, 1) })
-            .to(0.05, { scale: v3(1, 1, 1) })
-            .start();
+        const btn = this.findButton(num);
+        if (btn) {
+            tween(btn)
+                .to(0.05, { scale: v3(0.9, 0.9, 1) })
+                .to(0.05, { scale: v3(1, 1, 1) })
+                .start();
+        }
 
         this._onAnswer?.(num);
     }
 
     public flashCorrect(num: number) {
-        const btn = this.buttons[num - 1];
+        const btn = this.findButton(num);
+        if (!btn) return;
         const sprite = btn.getComponent(Sprite);
         if (!sprite) return;
         const original = sprite.color.clone();
@@ -75,7 +96,8 @@ export class ButtonPanel extends Component {
     }
 
     public flashWrong(num: number) {
-        const btn = this.buttons[num - 1];
+        const btn = this.findButton(num);
+        if (!btn) return;
         tween(btn)
             .to(0.05, { position: v3(btn.position.x - 5, btn.position.y, 0) })
             .to(0.05, { position: v3(btn.position.x + 5, btn.position.y, 0) })
