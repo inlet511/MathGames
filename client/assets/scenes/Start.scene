@@ -286,8 +286,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 292,
-      "height": 99.76
+      "width": 296.2,
+      "height": 103.96000000000001
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -336,12 +336,12 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 0,
-      "g": 0,
-      "b": 0,
+      "r": 33,
+      "g": 13,
+      "b": 134,
       "a": 255
     },
-    "_outlineWidth": 2,
+    "_outlineWidth": 4.1,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -418,7 +418,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 196,
+      "width": 168,
       "height": 40.32
     },
     "_anchorPoint": {
@@ -448,7 +448,7 @@
       "b": 200,
       "a": 255
     },
-    "_string": "选择一个小游戏",
+    "_string": "佑琦好好学！",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 28,
@@ -566,11 +566,11 @@
       }
     ],
     "targetScenes": [
-      "Count",
-      "Addition",
-      "SmallMath",
-      "BigMath",
-      "Split",
+      "01-count",
+      "02-split",
+      "03-addition",
+      "04-smallmath",
+      "05-bigmath",
       ""
     ],
     "_id": "e04504b0-ccf6-4248-84c6-a66885965803"
@@ -932,7 +932,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 219.83984375,
+      "width": 214,
       "height": 81.6
     },
     "_anchorPoint": {
@@ -962,7 +962,7 @@
       "b": 255,
       "a": 255
     },
-    "_string": "10内加减",
+    "_string": "数的分成",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 52,
@@ -1207,7 +1207,7 @@
       "b": 255,
       "a": 255
     },
-    "_string": "20内加减",
+    "_string": "10内加减",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 52,
@@ -1422,7 +1422,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 248.759765625,
+      "width": 219.83984375,
       "height": 81.6
     },
     "_anchorPoint": {
@@ -1452,7 +1452,7 @@
       "b": 255,
       "a": 255
     },
-    "_string": "100内加减",
+    "_string": "20内加减",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 52,
@@ -1667,7 +1667,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 214,
+      "width": 248.759765625,
       "height": 81.6
     },
     "_anchorPoint": {
@@ -1697,7 +1697,7 @@
       "b": 255,
       "a": 200
     },
-    "_string": "数的分成",
+    "_string": "100内加减",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 52,

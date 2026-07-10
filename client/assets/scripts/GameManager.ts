@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, Label, Node, v3, tween, UITransform, input, Input, director } from 'cc';
+import { _decorator, Color, Component, Label, Node, Sprite, v3, tween, UITransform, input, Input, director } from 'cc';
 import { AudioManager } from './AudioManager';
 import { ScoreManager } from './ScoreManager';
 import { TimerManager } from './TimerManager';
@@ -68,7 +68,7 @@ export class GameManager extends Component {
         this.audioManager?.preload('beepFinal', 'audio/beep-final');
 
         if (this.feedbackLabel) this.feedbackLabel.node.active = false;
-        if (this.countdownLabel) this.countdownLabel.node.active = false;
+        if (this.countdownLabel) this.countdownNode!.active = false;
 
         // 监听全局点击,在 idle 状态下开始游戏
         input.on(Input.EventType.TOUCH_START, this.onTouchStart, this);
@@ -82,10 +82,19 @@ export class GameManager extends Component {
         this.showIdle();
     }
 
+    // 倒计时显示节点:背景色块 Sprite 挂在这个节点上,Label 在其子节点。
+    // 兼容旧场景(Label 与背景同节点)——没有背景父节点时回退到 Label 自身节点。
+    private get countdownNode(): Node | null {
+        if (!this.countdownLabel) return null;
+        const self = this.countdownLabel.node;
+        const parent = self.parent;
+        return parent && parent.getComponent(Sprite) ? parent : self;
+    }
+
     private showIdle() {
         this._state = GameState.IDLE;
         if (this.countdownLabel) {
-            this.countdownLabel.node.active = true;
+            this.countdownNode!.active = true;
             this.countdownLabel.string = '点击开始';
         }
         this.buttonPanel?.setEnabled(false);
@@ -105,14 +114,15 @@ export class GameManager extends Component {
 
     private showCountdown(num: number) {
         if (!this.countdownLabel) return;
-        this.countdownLabel.node.active = true;
+        const node = this.countdownNode!;
+        node.active = true;
         this.countdownLabel.string = num > 0 ? `${num}` : '开始!';
-        this.countdownLabel.node.setScale(v3(0, 0, 0));
+        node.setScale(v3(0, 0, 0));
 
         // 倒计时音效:3-2-1 用 beep,"开始!" 用 beepFinal
         this.audioManager?.play(num > 0 ? 'beep' : 'beepFinal');
 
-        tween(this.countdownLabel.node)
+        tween(node)
             .to(0.2, { scale: v3(1.3, 1.3, 1) }, { easing: 'backOut' })
             .to(0.1, { scale: v3(1, 1, 1) })
             .delay(num > 0 ? 0.5 : 0.3)
@@ -120,7 +130,7 @@ export class GameManager extends Component {
                 if (num > 0) {
                     this.showCountdown(num - 1);
                 } else {
-                    this.countdownLabel.node.active = false;
+                    node.active = false;
                     this.startPlaying();
                 }
             })
@@ -237,7 +247,7 @@ export class GameManager extends Component {
 
         // 隐藏游戏中的临时 label,避免和结算面板重叠
         if (this.feedbackLabel) this.feedbackLabel.node.active = false;
-        if (this.countdownLabel) this.countdownLabel.node.active = false;
+        if (this.countdownLabel) this.countdownNode!.active = false;
 
         const sm = this.scoreManager;
         console.log('[GameManager] scoreManager=', !!sm, 'resultPanel=', !!this.resultPanel);

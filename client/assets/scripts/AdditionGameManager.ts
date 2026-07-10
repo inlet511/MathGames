@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, Label, Node, v3, tween, input, Input, director } from 'cc';
+import { _decorator, Color, Component, Label, Node, Sprite, v3, tween, input, Input, director } from 'cc';
 import { AudioManager } from './AudioManager';
 import { ScoreManager } from './ScoreManager';
 import { FruitSpawner } from './FruitSpawner';
@@ -82,7 +82,7 @@ export class AdditionGameManager extends Component {
         this.audioManager?.preload('beepFinal', 'audio/beep-final');
 
         if (this.feedbackLabel) this.feedbackLabel.node.active = false;
-        if (this.countdownLabel) this.countdownLabel.node.active = false;
+        if (this.countdownLabel) this.countdownNode!.active = false;
 
         input.on(Input.EventType.TOUCH_START, this.onTouchStart, this);
     }
@@ -95,10 +95,19 @@ export class AdditionGameManager extends Component {
         this.showIdle();
     }
 
+    // 倒计时显示节点:背景色块 Sprite 挂在这个节点上,Label 在其子节点。
+    // 兼容旧场景(Label 与背景同节点)——没有背景父节点时回退到 Label 自身节点。
+    private get countdownNode(): Node | null {
+        if (!this.countdownLabel) return null;
+        const self = this.countdownLabel.node;
+        const parent = self.parent;
+        return parent && parent.getComponent(Sprite) ? parent : self;
+    }
+
     private showIdle() {
         this._state = GameState.IDLE;
         if (this.countdownLabel) {
-            this.countdownLabel.node.active = true;
+            this.countdownNode!.active = true;
             this.countdownLabel.string = '点击开始';
         }
         if (this.progressLabel) this.progressLabel.string = '';
@@ -125,13 +134,14 @@ export class AdditionGameManager extends Component {
 
     private showCountdown(num: number) {
         if (!this.countdownLabel) return;
-        this.countdownLabel.node.active = true;
+        const node = this.countdownNode!;
+        node.active = true;
         this.countdownLabel.string = num > 0 ? `${num}` : '开始!';
-        this.countdownLabel.node.setScale(v3(0, 0, 0));
+        node.setScale(v3(0, 0, 0));
 
         this.audioManager?.play(num > 0 ? 'beep' : 'beepFinal');
 
-        tween(this.countdownLabel.node)
+        tween(node)
             .to(0.2, { scale: v3(1.3, 1.3, 1) }, { easing: 'backOut' })
             .to(0.1, { scale: v3(1, 1, 1) })
             .delay(num > 0 ? 0.5 : 0.3)
@@ -139,7 +149,7 @@ export class AdditionGameManager extends Component {
                 if (num > 0) {
                     this.showCountdown(num - 1);
                 } else {
-                    this.countdownLabel!.node.active = false;
+                    node.active = false;
                     this.startPlaying();
                 }
             })
@@ -245,7 +255,7 @@ export class AdditionGameManager extends Component {
         this.rightSpawner?.clearFruits();
 
         if (this.feedbackLabel) this.feedbackLabel.node.active = false;
-        if (this.countdownLabel) this.countdownLabel.node.active = false;
+        if (this.countdownLabel) this.countdownNode!.active = false;
         if (this.operatorLabel) this.operatorLabel.node.active = false;
         if (this.progressLabel) this.progressLabel.string = '';
         this.showEquation('');

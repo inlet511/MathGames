@@ -7,8 +7,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // 数据库文件放在 server/ 目录下(与 src 同级的上一层),被 .gitignore 忽略
 const DB_PATH = join(__dirname, '..', 'leaderboard.db');
 
-// 合法的游戏标识,与前端一一对应
-export const GAMES = ['count', 'addition', 'small', 'big', 'split'] as const;
+// 合法的游戏标识,与前端关卡顺序一一对应:
+// 01-count / 02-split / 03-addition(10内加减) / 04-smallmath(20内加减) / 05-bigmath
+export const GAMES = ['count', 'split', 'addition', 'small', 'big'] as const;
 export type GameId = (typeof GAMES)[number];
 
 const db = new Database(DB_PATH);

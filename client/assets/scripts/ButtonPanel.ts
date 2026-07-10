@@ -4,10 +4,15 @@ const { ccclass, property } = _decorator;
 
 const BUTTON_COLORS = [
     new Color(231, 76, 60),   // 1 - 红
-    new Color(52, 152, 219),  // 2 - 蓝
-    new Color(46, 204, 113),  // 3 - 绿
-    new Color(243, 156, 18),  // 4 - 橙
-    new Color(155, 89, 182),  // 5 - 紫
+    new Color(243, 156, 18),  // 2 - 橙
+    new Color(241, 196, 15),  // 3 - 黄
+    new Color(46, 204, 113),  // 4 - 绿
+    new Color(26, 188, 156),  // 5 - 青
+    new Color(52, 152, 219),  // 6 - 蓝
+    new Color(108, 92, 231),  // 7 - 靛
+    new Color(155, 89, 182),  // 8 - 紫
+    new Color(232, 67, 147),  // 9 - 粉
+    new Color(255, 118, 117), // 10 - 珊瑚
 ];
 
 @ccclass('ButtonPanel')
@@ -28,14 +33,17 @@ export class ButtonPanel extends Component {
             const num = numButton ? numButton.number : i + 1;
 
             if (numButton) {
-                // prefab 自己已在 onLoad 里刷好数字与颜色,这里不覆盖
+                // prefab 里的文本由 BasicButton 维护,这里只刷新文本
                 numButton.apply();
             } else {
-                const sprite = btn.getComponent(Sprite);
-                if (sprite) sprite.color = BUTTON_COLORS[i % BUTTON_COLORS.length];
+                // 旧场景:没有 BasicButton,面板直接写文本
                 const label = btn.getComponentInChildren(Label);
                 if (label) label.string = `${num}`;
             }
+
+            // 底色统一由面板按位置分配,覆盖 prefab/场景里的实例配色
+            const sprite = btn.getComponent(Sprite);
+            if (sprite) sprite.color = BUTTON_COLORS[i % BUTTON_COLORS.length];
 
             // 点击事件(闭包捕获该按钮对应的数字)
             btn.on(Node.EventType.TOUCH_END, () => {

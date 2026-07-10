@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, Graphics, Label, Node, UITransform, v3, tween, input, Input, director } from 'cc';
+import { _decorator, Color, Component, Graphics, Label, Node, Sprite, UITransform, v3, tween, Tween, input, Input, director } from 'cc';
 import { AudioManager } from './AudioManager';
 import { ScoreManager } from './ScoreManager';
 import { FruitSpawner } from './FruitSpawner';
@@ -59,7 +59,7 @@ export class SplitGameManager extends Component {
     @property(Graphics)
     private lineGraphics: Graphics | null = null;
 
-    // 三堆的"方框(未知数)"节点:对应堆被挖空时显示,其余隐藏
+    // 三堆的背景色块节点:始终显示。已知数用白色背景(上面摆水果),未知数用紫色背景 + "?"。
     @property(Node)
     private topBox: Node | null = null;
 
@@ -96,6 +96,10 @@ export class SplitGameManager extends Component {
     @property
     private totalQuestions: number = 15;
 
+    // 背景色块颜色:已知数白色,未知数紫色(#7931B3)
+    private static readonly KNOWN_COLOR = new Color(255, 255, 255, 255);
+    private static readonly UNKNOWN_COLOR = new Color(121, 49, 179, 255);
+
     private _state: GameState = GameState.IDLE;
     private _currentAnswer: number = 0;
     private _questionStartTime: number = 0;
@@ -115,7 +119,7 @@ export class SplitGameManager extends Component {
         this.audioManager?.preload('beepFinal', 'audio/beep-final');
 
         if (this.feedbackLabel) this.feedbackLabel.node.active = false;
-        if (this.countdownLabel) this.countdownLabel.node.active = false;
+        if (this.countdownLabel) this.countdownNode!.active = false;
 
         input.on(Input.EventType.TOUCH_START, this.onTouchStart, this);
     }
@@ -128,10 +132,19 @@ export class SplitGameManager extends Component {
         this.showIdle();
     }
 
+    // 倒计时显示节点:背景色块 Sprite 挂在这个节点上,Label 在其子节点。
+    // 兼容旧场景(Label 与背景同节点)——没有背景父节点时回退到 Label 自身节点。
+    private get countdownNode(): Node | null {
+        if (!this.countdownLabel) return null;
+        const self = this.countdownLabel.node;
+        const parent = self.parent;
+        return parent && parent.getComponent(Sprite) ? parent : self;
+    }
+
     private showIdle() {
         this._state = GameState.IDLE;
         if (this.countdownLabel) {
-            this.countdownLabel.node.active = true;
+            this.countdownNode!.active = true;
             this.countdownLabel.string = '点击开始';
         }
         if (this.progressLabel) this.progressLabel.string = '';
@@ -154,13 +167,14 @@ export class SplitGameManager extends Component {
 
     private showCountdown(num: number) {
         if (!this.countdownLabel) return;
-        this.countdownLabel.node.active = true;
+        const node = this.countdownNode!;
+        node.active = true;
         this.countdownLabel.string = num > 0 ? `${num}` : '开始!';
-        this.countdownLabel.node.setScale(v3(0, 0, 0));
+        node.setScale(v3(0, 0, 0));
 
         this.audioManager?.play(num > 0 ? 'beep' : 'beepFinal');
 
-        tween(this.countdownLabel.node)
+        tween(node)
             .to(0.2, { scale: v3(1.3, 1.3, 1) }, { easing: 'backOut' })
             .to(0.1, { scale: v3(1, 1, 1) })
             .delay(num > 0 ? 0.5 : 0.3)
@@ -168,7 +182,7 @@ export class SplitGameManager extends Component {
                 if (num > 0) {
                     this.showCountdown(num - 1);
                 } else {
-                    this.countdownLabel!.node.active = false;
+                    node.active = false;
                     this.startPlaying();
                 }
             })
@@ -225,7 +239,8 @@ export class SplitGameManager extends Component {
         this._state = GameState.WAITING_ANSWER;
     }
 
-    // 渲染一堆:若为未知堆则清空水果并显示方框,否则摆水果并隐藏方框
+    // 渲染一堆:背景色块始终显示。已知数 → 白色背景 + 摆水果、隐藏 "?";
+    // 未知数 → 紫色背景 + 显示 "?"、清空水果,并做弹出反馈。
     private renderPile(
         pile: Unknown,
         spawner: FruitSpawner | null,
@@ -235,17 +250,35 @@ export class SplitGameManager extends Component {
         fruit: string | null
     ) {
         const isUnknown = pile === unknown;
-        if (box) box.active = isUnknown;
-        if (isUnknown) {
-            spawner?.clearFruits();
-            // 方框弹出反馈
-            if (box) {
+
+        if (box) {
+            box.active = true;
+            // 背景色:已知白色 / 未知紫色
+            const sprite = box.getComponent(Sprite);
+            if (sprite) {
+                sprite.color = isUnknown
+                    ? SplitGameManager.UNKNOWN_COLOR
+                    : SplitGameManager.KNOWN_COLOR;
+            }
+            // "?" 仅未知堆显示
+            const q = box.getComponentInChildren(Label);
+            if (q) q.node.active = isUnknown;
+
+            // 未知堆弹出反馈;已知堆保持原始大小
+            Tween.stopAllByTarget(box);
+            if (isUnknown) {
                 box.setScale(v3(0, 0, 0));
                 tween(box)
                     .to(0.12, { scale: v3(1.1, 1.1, 1) }, { easing: 'backOut' })
                     .to(0.08, { scale: v3(1, 1, 1) })
                     .start();
+            } else {
+                box.setScale(v3(1, 1, 1));
             }
+        }
+
+        if (isUnknown) {
+            spawner?.clearFruits();
         } else {
             spawner?.spawn(count, true, true, false, fruit);
         }
@@ -254,8 +287,9 @@ export class SplitGameManager extends Component {
     private setSide(label: Label | null, value: number, isUnknown: boolean) {
         if (!label) return;
         label.node.active = true;
-        label.string = isUnknown ? '?' : `${value}`;
-        label.color = isUnknown ? new Color(231, 76, 60) : new Color(60, 60, 60);
+        // 未知项:留空(不显示 "?"),未知指示交给紫色色块;已知项显示数字
+        label.string = isUnknown ? '' : `${value}`;
+        label.color = new Color(60, 60, 60);
     }
 
     // 画整套示意图:三个区域各用一个方框包围,再从上框边缘精确连线到左右两个下框边缘。
@@ -289,21 +323,11 @@ export class SplitGameManager extends Component {
         g.lineWidth = 5;
         g.strokeColor = new Color(150, 150, 150, 255);
 
-        // 三个方框:包围每个固定区域(含未知数框)
-        this.strokeFrame(g, top, th);
-        this.strokeFrame(g, left, lh);
-        this.strokeFrame(g, right, rh);
-
-        // 两根连线:从上框边缘出发,精确接触左/右下框边缘
+        // 两根连线:从上堆色块边缘出发,精确接触左/右下色块边缘(不再画方框轮廓)
         this.strokeConnector(g, top, th, left, lh);
         this.strokeConnector(g, top, th, right, rh);
 
         g.stroke();
-    }
-
-    // 以 center 为中心、half 为半宽高描一个矩形边框
-    private strokeFrame(g: Graphics, c: { x: number; y: number }, h: { hw: number; hh: number }) {
-        g.rect(c.x - h.hw, c.y - h.hh, h.hw * 2, h.hh * 2);
     }
 
     // 连接两个矩形框:分别求射线与各自框边界的交点作为端点,使连线精确贴合框边缘
@@ -367,7 +391,7 @@ export class SplitGameManager extends Component {
         this.hideAllVisuals();
 
         if (this.feedbackLabel) this.feedbackLabel.node.active = false;
-        if (this.countdownLabel) this.countdownLabel.node.active = false;
+        if (this.countdownLabel) this.countdownNode!.active = false;
         if (this.progressLabel) this.progressLabel.string = '';
         this.showEquation('');
 

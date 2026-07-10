@@ -4,10 +4,56 @@ import { sys } from 'cc';
  * 排行榜服务:封装与后端的 HTTP 通信,以及本地用户名存储。
  * 后端接口见 server/README.md。
  *
- * 服务器地址集中在此处 BASE_URL,部署到真实服务器时改这里即可。
- * 注意:端口用 4567 —— 3000 被 Cocos Creator 编辑器内部服务占用。
+ * —— 后端地址配置(H5 部署,构建后可改,无需重新编译)——
+ * 地址来源优先级:
+ *   1) 构建产物根目录的 config.json 里的 backendUrl 字段(运行时读取)。
+ *      部署后直接在服务器上编辑该文件即可改地址,刷新页面生效。
+ *      · 填独立域名:"https://api.你的域名.com"(前端 https 则后端也必须 https)
+ *      · 同源反代(推荐):填 "",请求走相对路径 /api/...,无跨域/无混合内容,
+ *        需 Nginx 把 /api 转发到后端。
+ *   2) 读不到 config.json 时自动降级:本机/内网用 DEV_BASE_URL,其余用相对路径。
+ * 本地编辑器预览无需任何配置。端口 4567 —— 3000 被 Cocos 编辑器占用。
  */
-const BASE_URL = 'http://localhost:4567';
+const DEV_BASE_URL = 'http://localhost:4567';   // 本地开发地址,一般不用改
+
+// 运行时读到的后端地址:undefined=config 还没加载完;string(含空串)=已确定。
+let _configuredBaseUrl: string | undefined;
+
+// 自动降级:web 平台本机/内网用开发地址,线上用相对路径(同源);非 web 用相对路径。
+function fallbackBaseUrl(): string {
+    if (typeof location === 'undefined' || !location.hostname) return '';
+    const h = location.hostname;
+    const isLocal = h === 'localhost' || h === '127.0.0.1'
+        || h.startsWith('192.168.') || h.startsWith('10.');
+    return isLocal ? DEV_BASE_URL : '';
+}
+
+// 当前生效地址:config 已加载则用它(空串=同源),否则用降级值。
+function baseUrl(): string {
+    return _configuredBaseUrl ?? fallbackBaseUrl();
+}
+
+// 启动时异步拉取 config.json(带时间戳防缓存)。分数提交发生在一局游戏之后,
+// 这点网络往返早已完成,不会有竞态;失败则保持降级逻辑。
+(function loadBackendConfig() {
+    if (typeof XMLHttpRequest === 'undefined') return;
+    try {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', `config.json?t=${new Date().getTime()}`, true);
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState !== 4) return;
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const cfg = JSON.parse(xhr.responseText);
+                    if (typeof cfg.backendUrl === 'string') {
+                        _configuredBaseUrl = cfg.backendUrl.replace(/\/+$/, '');
+                    }
+                } catch { /* 解析失败保持降级 */ }
+            }
+        };
+        xhr.send();
+    } catch { /* 忽略,保持降级 */ }
+})();
 
 const NAME_KEY = 'playerName';
 
@@ -115,7 +161,7 @@ export class LeaderboardService {
         correct: number,
         total: number
     ): Promise<SubmitResult> {
-        return request<SubmitResult>('POST', `${BASE_URL}/api/score`, {
+        return request<SubmitResult>('POST', `${baseUrl()}/api/score`, {
             game,
             name: (name ?? '').trim().slice(0, 12),
             score,
@@ -128,7 +174,7 @@ export class LeaderboardService {
     static preview(game: string, score: number): Promise<PreviewResult> {
         return request<PreviewResult>(
             'GET',
-            `${BASE_URL}/api/preview?game=${encodeURIComponent(game)}&score=${score}`
+            `${baseUrl()}/api/preview?game=${encodeURIComponent(game)}&score=${score}`
         );
     }
 
@@ -136,7 +182,7 @@ export class LeaderboardService {
     static top(game: string, n = 10): Promise<TopEntry[]> {
         return request<{ game: string; entries: TopEntry[] }>(
             'GET',
-            `${BASE_URL}/api/top?game=${encodeURIComponent(game)}&n=${n}`
+            `${baseUrl()}/api/top?game=${encodeURIComponent(game)}&n=${n}`
         ).then((res) => res.entries ?? []);
     }
 }

@@ -5,11 +5,11 @@ const { ccclass, property } = _decorator;
 
 // 场景名 → 游戏标识。做成预制体后 gameId 不再每场景手填,运行时按当前场景名推断。
 const SCENE_TO_GAME: Record<string, string> = {
-    Count: 'count',
-    Addition: 'addition',
-    SmallMath: 'small',
-    BigMath: 'big',
-    Split: 'split',
+    '01-count': 'count',
+    '02-split': 'split',
+    '03-addition': 'addition',
+    '04-smallmath': 'small',
+    '05-bigmath': 'big',
 };
 
 // 按星数(0~4)分档的鼓励评语库,每档多句随机挑一句;内容积极、有趣、无脏话
