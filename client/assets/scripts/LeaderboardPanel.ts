@@ -123,13 +123,9 @@ export class LeaderboardPanel extends Component {
     public open() {
         const panel = this.panel;
         panel.active = true;
-        panel.setScale(v3(0, 0, 0));
+        panel.setScale(v3(1, 1, 1));
         // 复位到未上移状态(上次编辑上移后可能停在偏移位置)
         panel.setPosition(v3(0, 0, 0));
-        tween(panel)
-            .to(0.25, { scale: v3(1.05, 1.05, 1) }, { easing: 'backOut' })
-            .to(0.1, { scale: v3(1, 1, 1) })
-            .start();
 
         // 预填保存的名字
         if (this.nameEditBox) {
@@ -142,12 +138,13 @@ export class LeaderboardPanel extends Component {
         LeaderboardService.preview(this._game, this._score)
             .then((res) => {
                 if (this.rankLabel) {
+                    console.log(`Leaderboard preview: rank=${res.rank}, total=${res.total}, topPercent=${res.topPercent}`);
                     const suffix = LeaderboardService.submitted ? '(已上榜)' : '';
                     this.rankLabel.string =
                         `本次成绩:第 ${res.rank} 名 / 共 ${res.total} 人\n超过 ${100 - res.topPercent}% 的玩家${suffix}`;
                 }
             })
-            .catch(() => {
+            .catch((err) => {
                 if (this.rankLabel) this.rankLabel.string = '';
             });
         this.refreshTop();
@@ -202,9 +199,9 @@ export class LeaderboardPanel extends Component {
             this.listLabel.string = '还没有人上榜,快来当第一名!';
             return;
         }
-        // 每行:名次  名字  分数;名字空则显示“匿名”
+        // 每行:名次  名字  分数;名字空则显示“神秘人”
         const lines = entries.map((e) => {
-            const name = (e.name && e.name.length > 0) ? e.name : '匿名';
+            const name = (e.name && e.name.length > 0) ? e.name : '神秘人';
             const rankStr = `${e.rank}`.padStart(2, ' ');
             const nameStr = name.padEnd(6, ' ');
             return `${rankStr}.  ${nameStr}  ${e.score}`;

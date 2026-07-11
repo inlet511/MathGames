@@ -132,7 +132,7 @@ export class ResultPanel extends Component {
     public show(score: number, correctCount: number, totalCount: number, maxCombo: number, fastestReaction: number, stars: number) {
         const panel = this.panel;
         panel.active = true;
-        panel.setScale(v3(0, 0, 0));
+        panel.setScale(v3(1, 1, 1));
 
         // 满星数(与 ScoreManager.getStarCount 上限一致)
         const MAX_STARS = 4;
@@ -160,11 +160,6 @@ export class ResultPanel extends Component {
         this.leaderboardPanel?.setResult(this.resolveGameId(), score, correctCount, totalCount);
         // 预热排行榜面板,消除首次点击"排行榜"时的卡顿(字体图集/DOM input 等一次性开销)
         this.leaderboardPanel?.prewarm();
-
-        tween(panel)
-            .to(0.3, { scale: v3(1.1, 1.1, 1) }, { easing: 'backOut' })
-            .to(0.1, { scale: v3(1, 1, 1) })
-            .start();
     }
 
     public hide() {
